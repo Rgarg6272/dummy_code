@@ -1,4 +1,27 @@
 import React, { useState, useEffect } from "react";
+import { useHistory } from "react-router-dom";
+import {
+    Tabs,
+    Tab,
+    Container,
+    Divider,
+    Grid,
+    Typography,
+    Breadcrumbs,
+    Link,
+    Paper,
+    Box,
+} from "@material-ui/core";
+import { useStyles } from "../../../css/MemberDetails";
+import {
+    MuiThemeProvider,
+    createMuiTheme,
+    makeStyles,
+    withStyles
+} from "@material-ui/core/styles";
+import { COMMONCSS } from "../../../css/CommonCss";
+import NavigateNextIcon from '@material-ui/icons/NavigateNext';
+import HomeOutlinedIcon from '@material-ui/icons/HomeOutlined';
 import { MemberInfoDetails, MemberIdentifier, MemberAddress, MemberContact, SettingOfCare, NFLOC, DeleLevelCare, OtherKeyInfoLeft, OtherKeyInfoRight, TabInfo } from '../../../../constants/memberData';
 import Location from '../../../../assets/Location.png';
 import Call from '../../../../assets/Call.png';
@@ -18,6 +41,8 @@ import { serviceUrls } from "../../../../utils/serviceUrls";
 import { requestWrapper } from "../../../../utils/requestWrapper";
 import { Loader } from "../../../common/Loader";
 
+
+
 const useStyles1 = makeStyles((theme) => COMMONCSS(theme));
 
 export const MemberInformation = (props) => {
@@ -32,17 +57,20 @@ export const MemberInformation = (props) => {
     const [loading, setLoading] = useState(false);
     const [content, setContent] = useState("");
     const [tabValue, setTabValue] = React.useState(0);
+    const [data, setData] = useState([]);
 
     const [memberDeleTab, setMemberDeleTab] = useState({
-        Subscriber_id: "10565861300",
+        Subscriber_id: "10559028300",
     })
 
     const location = useLocation();
+
     const handleChange = (newValue) => { 
+       // console.log("tab -0")
+       setTabValue(newValue);
        if(tabValue === 0){
            getMemberDeleTab(memberDeleTab);
        }
-       setTabValue(newValue);
     };
 
     const getMemberDeleTab = (memberDeleTab) => {
@@ -60,15 +88,15 @@ export const MemberInformation = (props) => {
         })
         .then((response) => {
             setLoading(false);
-            const ErrorCode = response.system.properties.code.example;
-            const ErrorMsg = response.system.properties.message.example;
-            if(ErrorCode == 500){
-                setContent("Internal Error");
-            } else if(ErrorCode == 200) {
-                setLoading(false);
-            }
+            console.log("line number -93", response.get_member_delegation);
+            setData(response.get_member_delegation);
         })
     }
+
+    useEffect(() => {
+    //    console.log('location::',location.state.result);
+    });
+
     return (
         <React.Fragment>
             <div className={classes1.BreadCrumbDiv}>
@@ -99,7 +127,7 @@ export const MemberInformation = (props) => {
              </div>
              {loading && <Loader />}
              <div className={classes1.tabHeaderDiv1} style={{paddingBottom:"1rem"}}>
-                 {tabValue === 0 && <DelegationDetailsTable />}
+                 {tabValue === 0 && <DelegationDetailsTable delegationDetail={data} />}
                  {tabValue === 1 && <DelegatedDetailsTable />}
                  {tabValue === 2 && <DelegatedLevelTable />}
                  {tabValue === 3 && <RecentDatesTable />}
