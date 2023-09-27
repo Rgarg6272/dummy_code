@@ -1,17 +1,5 @@
 import React, { useState, useEffect } from "react";
 import { useHistory } from "react-router-dom";
-import {
-    Tabs,
-    Tab,
-    Container,
-    Divider,
-    Grid,
-    Typography,
-    Breadcrumbs,
-    Link,
-    Paper,
-    Box,
-} from "@material-ui/core";
 import { useStyles } from "../../../css/MemberDetails";
 import {
     MuiThemeProvider,
@@ -39,9 +27,6 @@ import { DelegatedNotesTable } from "../DelegationInformation/DelegatedNotesTabl
 import { useLocation } from "react-router-dom";
 import { serviceUrls } from "../../../../utils/serviceUrls";
 import { requestWrapper } from "../../../../utils/requestWrapper";
-import { Loader } from "../../../common/Loader";
-
-
 
 const useStyles1 = makeStyles((theme) => COMMONCSS(theme));
 
@@ -54,48 +39,67 @@ export const MemberInformation = (props) => {
     const [memberIdentify, setMemberIdentify] = useState(MemberIdentifier)
     const [memberAddress, setMemberAddress] = useState(MemberAddress)
     const [memberContact, setMemberContact] = useState(MemberContact)
-    const [loading, setLoading] = useState(false);
-    const [content, setContent] = useState("");
     const [tabValue, setTabValue] = React.useState(0);
-    const [data, setData] = useState([]);
-
-    const [memberDeleTab, setMemberDeleTab] = useState({
-        Subscriber_id: "10559028300",
-    })
-
     const location = useLocation();
+    const [memberInfoData, setMemberInfoData] = useState("");
+    const [delegationData, setDelegationData] = useState("");
+    const [resultData1, setResultData1] = useState([]);
+    const [resultData2, setResultData2] = useState([]);
+    const [resultData3, setResultData3] = useState([]);
+    const [loading, setLoading] = useState(false);
+    const [recentDate, setRecentDate] = useState(false);
 
-    const handleChange = (newValue) => { 
-       // console.log("tab -0")
-       setTabValue(newValue);
-       if(tabValue === 0){
-           getMemberDeleTab(memberDeleTab);
-       }
+    var URL="";
+    var responseData1;
+    var responseData2;
+    var responseData3;
+
+    const handleChange = (newValue) => {
+        setTabValue(newValue);
+        if (newValue === 0 || newValue === 1 || newValue === 3) {
+            if (newValue === 0) {
+                URL = serviceUrls.get_member_delegation_tab;
+            } else if (newValue === 1) {
+                URL = serviceUrls.get_member_delegated_tab;
+            } else if (newValue === 3) {
+                URL = serviceUrls.get_member_recent_date_tab;
+            }
+            var filter_obj = {
+                Subscriber_id: location.state.subscriberId ? location.state.subscriberId : "",
+            }
+            setLoading(true);
+            requestWrapper(URL, {
+                method: "POST",
+                headers: {
+                    "Content-type": "application/json",
+                },
+                data: filter_obj,
+            })
+                .then((response) => {
+                    setLoading(false);
+                    const ErrorCode = response.system.properties.code.example;
+                    const ErrorMsg = response.system.properties.message.example;
+                    if (ErrorCode == 500) {
+                    } else if (ErrorCode == 200) {
+                        if (newValue === 0) {
+                            responseData1=response.get_member_delegation;
+                        } else if (newValue === 1) {
+                            responseData2=response.get_member_delegated;
+                        } else if (newValue === 3) {
+                            responseData3=response.get_recent_date;
+                            setRecentDate(true)
+                        }
+                    }
+                })
+                .catch((error) => {
+                    setLoading(false);
+                });
+        }
     };
 
-    const getMemberDeleTab = (memberDeleTab) => {
-        const filter_obj = {
-            Subscriber_id: memberDeleTab.Subscriber_id ? memberDeleTab.Subscriber_id : ""
-        }
-        setLoading(true);
-        console.log('if::', serviceUrls.get_member_delegation_tab);
-        requestWrapper(serviceUrls.get_member_delegation_tab, {
-            method: "POST",
-            headers: {
-                "Content-type": "application/json",
-            },
-            data: filter_obj,
-        })
-        .then((response) => {
-            setLoading(false);
-            console.log("line number -93", response.get_member_delegation);
-            setData(response.get_member_delegation);
-        })
-    }
-
     useEffect(() => {
-    //    console.log('location::',location.state.result);
-    });
+        console.log('location::', location.state);
+    }, [location]);
 
     return (
         <React.Fragment>
@@ -113,27 +117,24 @@ export const MemberInformation = (props) => {
                 </Breadcrumbs>
             </div>
             <div className="container" className={classes1.tabHeaderDiv1} >
+                {recentDate}
                 <Paper style={{ width: "100%" }} className={classes.paper}>
-                    <MemberInfo MemberInfoData={location.state.result.Member_information}/>
+                    <MemberInfo MemberInfoData={location && location.state && location.state.memInfoData && location.state.memInfoData.Member_information} />
                 </Paper>
 
                 <Paper style={{ width: "100%", marginTop: "1rem" }} className={classes.paper} >
-                    <MemberDelegateInfo MemberDelegateData={location.state.result.Member_key_delegation_info} />
+                    <MemberDelegateInfo MemberDelegateData={location && location.state && location.state.memInfoData && location.state.memInfoData.Member_key_delegation_info} />
                 </Paper>
             </div>
+            <>
+                <div style={{ padding: "0.5rem 2.5% 0rem 2.5%" }}>
+                    <DelegationTabs onChildValue={handleChange} />
+                </div>
 
-            <div style={{padding:"0.5rem 2.5% 0rem 2.5%"}}>
-                <DelegationTabs onChildValue={handleChange} />
-             </div>
-             {loading && <Loader />}
-             <div className={classes1.tabHeaderDiv1} style={{paddingBottom:"1rem"}}>
-                 {tabValue === 0 && <DelegationDetailsTable delegationDetail={data} />}
-                 {tabValue === 1 && <DelegatedDetailsTable />}
-                 {tabValue === 2 && <DelegatedLevelTable />}
-                 {tabValue === 3 && <RecentDatesTable />}
-                 {tabValue === 4 && <DelegatedContactsTable />}
-                 {tabValue === 5 && <DelegatedNotesTable />}
-             </div>
+                <div className={classes1.tabHeaderDiv1} style={{ paddingBottom: "1rem" }}>
+                    {tabValue === 0 && <DelegationDetailsTable resultData={location&&location.state&&location.state.memDeleData} />}
+                </div>
+            </>
         </React.Fragment>
 
     );
