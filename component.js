@@ -5,4 +5,4 @@ const FancyLink = React.forwardRef(({ navigate, ...props }, ref) => {
 })
 
 <Link to="/" component={FancyLink} />
-others
+
