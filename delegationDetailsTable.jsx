@@ -2,24 +2,6 @@ import { forwardRef } from "react";
 import React, { useEffect, useState } from "react";
 import { MuiThemeProvider, createMuiTheme } from "@material-ui/core/styles";
 import MaterialTable, { MTableToolbar } from "material-table";
-import AddBox from "@material-ui/icons/AddBox";
-import ArrowDownward from "@material-ui/icons/ArrowDownward";
-import Check from "@material-ui/icons/Check";
-import ChevronLeft from "@material-ui/icons/ChevronLeft";
-import ChevronRight from "@material-ui/icons/ChevronRight";
-import Clear from "@material-ui/icons/Clear";
-import DeleteOutline from "@material-ui/icons/DeleteOutline";
-import Edit from "@material-ui/icons/Edit";
-import FilterList from "@material-ui/icons/FilterList";
-import FirstPage from "@material-ui/icons/FirstPage";
-import LastPage from "@material-ui/icons/LastPage";
-import Remove from "@material-ui/icons/Remove";
-import SaveAlt from "@material-ui/icons/SaveAlt";
-import Search from "@material-ui/icons/Search";
-import ViewColumn from "@material-ui/icons/ViewColumn";
-import SimpleSnackbar from "../../../common/AlertMessage";
-import "jspdf-autotable";
-import { TablePagination } from "@material-ui/core";
 import { useHistory } from "react-router-dom";
 import Button from "@material-ui/core/Button";
 import GetAppIcon from "@material-ui/icons/GetApp";
@@ -34,72 +16,8 @@ import DateFnsUtils from '@date-io/date-fns';
 import { requestWrapper } from "../../../../utils/requestWrapper";
 import { serviceUrls } from "../../../../utils/serviceUrls";
 
-const drawerWidth = 200;
-
-const tableIcons = {
-    Add: forwardRef((props, ref) => <AddBox {...props} ref={ref} />),
-    Check: forwardRef((props, ref) => <Check {...props} ref={ref} />),
-    Clear: forwardRef((props, ref) => <Clear {...props} ref={ref} />),
-    Delete: forwardRef((props, ref) => <DeleteOutline {...props} ref={ref} />),
-    DetailPanel: forwardRef((props, ref) => (
-        <ChevronRight style={{ color: "#A71930" }} {...props} ref={ref} />
-    )),
-    Edit: forwardRef((props, ref) => <Edit {...props} ref={ref} />),
-
-    Filter: forwardRef((props, ref) => <FilterList {...props} ref={ref} />),
-    FirstPage: forwardRef((props, ref) => <FirstPage {...props} ref={ref} />),
-    LastPage: forwardRef((props, ref) => <LastPage {...props} ref={ref} />),
-    NextPage: forwardRef((props, ref) => <ChevronRight {...props} ref={ref} />),
-    PreviousPage: forwardRef((props, ref) => (
-        <ChevronLeft {...props} ref={ref} />
-    )),
-    ResetSearch: forwardRef((props, ref) => <Clear {...props} ref={ref} />),
-    Search: forwardRef((props, ref) => <Search {...props} ref={ref} />),
-    SortArrow: forwardRef((props, ref) => <ArrowDownward {...props} ref={ref} />),
-    ThirdStateCheck: forwardRef((props, ref) => <Remove {...props} ref={ref} />),
-    ViewColumn: forwardRef((props, ref) => <ViewColumn {...props} ref={ref} />),
-};
-function RenderValue(props) {
-    return (
-        <div>{props.value === " " || props.value === null ? "-" : props.value}</div>
-    );
-}
-const theme = createMuiTheme({
-    overrides: {
-        MuiToolbar: {
-            regular: {
-                height: "2.937em",
-                minHeight: "0.625em",
-                display: "flex",
-                flexWrap: "wrap",
-                justifyContent: "flex-end",
-                "@media(max-width:37.5em)": {
-                    minHeight: "fit-content",
-                    height: "fit-content",
-                },
-            },
-        },
-
-        MuiInput: {
-            underline: {
-                "&&&:before": {
-                    borderBottom: "none",
-                },
-                "&&&:after": {
-                    borderBottom: "none",
-                },
-                "&&&:not(.Mui-disabled):hover::before": {
-                    borderBottom: "none",
-                },
-            },
-        },
-    },
-});
-
 export const DelegationDetailsTable = ({ resultData, noData }) => {
-    // const [tableData, setData] = useState(DelegationTabletData);
     const [tableData, setData] = useState(resultData);
-    //const [delegateLoading, setLoading] = useState(loading);
     const [data2, setData2] = useState([]);
     const [snackOpen, setSnackOpen] = useState(false);
     const [snackSev, setSnackSev] = useState("");
@@ -124,7 +42,6 @@ export const DelegationDetailsTable = ({ resultData, noData }) => {
     let noData1 = "";
 
     const history = useHistory();
-
     const handleSnackClose = (event, reason) => {
         if (reason === "clickaway") {
             return;
@@ -202,7 +119,6 @@ export const DelegationDetailsTable = ({ resultData, noData }) => {
 
 
     useEffect(() => {
-        // setLoading(loading);
         setData(resultData);
         setNoDataF(noData);
         setCount(resultData && resultData.length > 0 ? resultData.length : 0);
@@ -211,9 +127,6 @@ export const DelegationDetailsTable = ({ resultData, noData }) => {
     return (
         <div class="deleTable">
             <MuiThemeProvider theme={theme}>
-                {/* <div style={{ textAlign: "center", paddingTop: "1.5em" }}>
-                    <span style={{ fontSize: "1.2rem", fontWeight: 700, color: "grey" }}> Development Under Progress </span>
-                </div> */}
                 <div class="input">
                     <MaterialTable
                         key={count}
@@ -227,21 +140,14 @@ export const DelegationDetailsTable = ({ resultData, noData }) => {
                                             fontWeight: "bold",
                                         }}
                                     >
-                                        {" "}
-                                        {/* {noData}{" "} */}
                                         No Data Found{""}
                                     </div>
                                 ),
                             },
                         }}
-                        // onRowClick={(event, rowData, togglePanel) =>
-                        //     handleClick(rowData)
-                        // }
                         autoHeight={true}
                         icons={tableIcons}
                         data={tableData}
-                        // loading={delegateLoading}
-                        // isLoading={delegateLoading}
                         tableRef={tableRef}
                         options={{
                             paging: false,
@@ -252,9 +158,7 @@ export const DelegationDetailsTable = ({ resultData, noData }) => {
                             selection: false,
                             maxBodyHeight: "25vh",
                             overflowY: "hidden !important",
-                            // exportButton: true,
                             padding: "dense",
-                            // pageSize: 10,
                             filtering: false,
                             searchFieldStyle: {
                                 padding: "0px 0px 0px 10px",
@@ -377,19 +281,11 @@ export const DelegationDetailsTable = ({ resultData, noData }) => {
                                                 onAccept={handleDateClose1}
                                                 onClick={handleInputClick}
                                                 format="MM/dd/yyyy"
-                                                // disableFuture
                                                 openTo="date"
                                                 clearable
-                                                // inputVariant="outlined"
                                                 helperText=''
                                                 InputProps={{
                                                     readOnly: true,
-                                                    // startAdornment: (
-                                                    //   <IconButton size="small">
-                                                    //     <EditIcon />
-                                                    //   </IconButton>
-                                                    // ),
-
                                                     style: { width: 155, paddingLeft: "2rem" },
                                                 }}
                                             />
@@ -430,14 +326,11 @@ export const DelegationDetailsTable = ({ resultData, noData }) => {
                                                 onChange={(date) => handleDateChange2(date, rowData)}
                                                 onAccept={handleDateClose2}
                                                 format="MM/dd/yyyy"
-                                                // disableFuture
                                                 openTo="date"
                                                 clearable
-                                                // inputVariant="outlined"
                                                 helperText=''
                                                 InputProps={{
                                                     readOnly: true,
-
                                                     style: { width: 155, paddingLeft: "2rem" },
                                                 }}
                                             />
@@ -448,13 +341,6 @@ export const DelegationDetailsTable = ({ resultData, noData }) => {
                         ]}
                     />
                 </div>
-
-                <SimpleSnackbar
-                    snackOpen={snackOpen}
-                    snackSev={snackSev}
-                    snackMsg={snackMsg}
-                    handleSnackClose={handleSnackClose}
-                />
             </MuiThemeProvider>
         </div>
     );
