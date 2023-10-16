@@ -2,20 +2,6 @@ import { forwardRef } from "react";
 import React, { useEffect, useState } from "react";
 import { MuiThemeProvider, createMuiTheme } from "@material-ui/core/styles";
 import MaterialTable, { MTableToolbar } from "material-table";
-import AddBox from "@material-ui/icons/AddBox";
-import ArrowDownward from "@material-ui/icons/ArrowDownward";
-import Check from "@material-ui/icons/Check";
-import ChevronLeft from "@material-ui/icons/ChevronLeft";
-import ChevronRight from "@material-ui/icons/ChevronRight";
-import Clear from "@material-ui/icons/Clear";
-import DeleteOutline from "@material-ui/icons/DeleteOutline";
-import Edit from "@material-ui/icons/Edit";
-import FilterList from "@material-ui/icons/FilterList";
-import FirstPage from "@material-ui/icons/FirstPage";
-import LastPage from "@material-ui/icons/LastPage";
-import Remove from "@material-ui/icons/Remove";
-import Search from "@material-ui/icons/Search";
-import ViewColumn from "@material-ui/icons/ViewColumn";
 import "jspdf-autotable";
 import { TablePagination, IconButton, Grid, makeStyles } from "@material-ui/core";
 import { useHistory } from "react-router-dom";
@@ -29,67 +15,6 @@ import { searchButtonStyles } from "../../css/SearchButtonStyles";
 import { useStyles } from "../../css/MemberDetails";
 import AssingDeleDialog from "../../pages/DelegatedContacts/AssignDeleDialog";
 import AssignDeleTableDialog from "../../pages/DelegatedContacts/AssignDeleTableDialog";
-
-const drawerWidth = 200;
-
-const tableIcons = {
-    Add: forwardRef((props, ref) => <AddBox {...props} ref={ref} />),
-    Check: forwardRef((props, ref) => <Check {...props} ref={ref} />),
-    Clear: forwardRef((props, ref) => <Clear {...props} ref={ref} />),
-    Delete: forwardRef((props, ref) => <DeleteOutline {...props} ref={ref} />),
-    DetailPanel: forwardRef((props, ref) => (
-        <ChevronRight style={{ color: "#A71930" }} {...props} ref={ref} />
-    )),
-    Edit: forwardRef((props, ref) => <Edit {...props} ref={ref} />),
-
-    Filter: forwardRef((props, ref) => <FilterList {...props} ref={ref} />),
-    FirstPage: forwardRef((props, ref) => <FirstPage {...props} ref={ref} />),
-    LastPage: forwardRef((props, ref) => <LastPage {...props} ref={ref} />),
-    NextPage: forwardRef((props, ref) => <ChevronRight {...props} ref={ref} />),
-    PreviousPage: forwardRef((props, ref) => (
-        <ChevronLeft {...props} ref={ref} />
-    )),
-    ResetSearch: forwardRef((props, ref) => <Clear {...props} ref={ref} />),
-    Search: forwardRef((props, ref) => <Search {...props} ref={ref} />),
-    SortArrow: forwardRef((props, ref) => <ArrowDownward {...props} ref={ref} />),
-    ThirdStateCheck: forwardRef((props, ref) => <Remove {...props} ref={ref} />),
-    ViewColumn: forwardRef((props, ref) => <ViewColumn {...props} ref={ref} />),
-};
-function RenderValue(props) {
-    return (
-        <div>{props.value === " " || props.value === null ? "-" : props.value}</div>
-    );
-}
-const theme = createMuiTheme({
-    overrides: {
-        MuiToolbar: {
-            regular: {
-                height: "2.937em",
-                minHeight: "0.625em",
-                display: "flex",
-                flexWrap: "wrap",
-                justifyContent: "flex-end",
-                "@media(max-width:37.5em)": {
-                    minHeight: "fit-content",
-                    height: "fit-content",
-                },
-            },
-        },
-        MuiInput: {
-            underline: {
-                "&&&:before": {
-                    borderBottom: "none",
-                },
-                "&&&:after": {
-                    borderBottom: "none",
-                },
-                "&&&:not(.Mui-disabled):hover::before": {
-                    borderBottom: "none",
-                },
-            },
-        },
-    },
-});
 
 export const MemberDeleContactsTable = () => {
     const spanStyle = {
@@ -156,50 +81,6 @@ export const MemberDeleContactsTable = () => {
         }
     }
 
-    const replaceRowById = (rowData) => {
-        const newData =
-        {
-            Delegate: "new 1",
-            Contact_Type: "new 1",
-            Contact_Name: "new 1",
-            Cell_Phone: "new 1",
-            Work_Phone: "new 1",
-            Email: "new 1",
-            Preferred: "new 1",
-        };
-
-        const updatedData = tableData.map(item => {
-            if (item.id === rowData.id) {
-                const id = rowData.id;
-                return { ...newData, id }; //Replace row with new data and same id
-            }
-            return item;
-        });
-        setData(updatedData);
-    }
-
-    const EditContactRowById = (rowData, flag) => {
-        const updateMemberData = AdDelegateContactData.map((inputData) => {
-            setRowId(rowData.id);
-            let res = Object.values(rowData);
-            if (rowData.flag === 'Add') {
-                return {
-                    ...inputData,
-                    value: res[inputData.id - 1]
-                };
-            } else {
-                return {
-                    ...inputData,
-                    value: res[inputData.id]
-                };
-            }
-        })
-        setAddData(updateMemberData);
-        setFlag(flag);
-        setAddHeader("Add New Contact");
-        setDialogOpen(true);
-    }
-
     useEffect(() => {
         setCount(tableData && tableData.length > 0 ? tableData.length : 0);
     }, []);
@@ -215,10 +96,6 @@ export const MemberDeleContactsTable = () => {
         setAssignDialogOpen(true);
     }
 
-    // function handleDeleDialog() {
-    //     setAssignDeleDialogOpen(true);
-    // }
-
     const handleOpenDialog = (rowData) => {
         setSelectedRow(rowData);
         setAssignDeleDialogOpen(true);
@@ -232,21 +109,6 @@ export const MemberDeleContactsTable = () => {
         console.log("which row", rowData);
         setData([...tableData, rowData]);
     };
-
-    // Replace logic
-    const handleReplaceRow = (rowData) => {
-        //Replace the selected row in your tableData state with the rowData from the popup table
-        const updatedTableData = tableData.map((item) => {
-            if (item.id === rowData.id) {
-                return rowData;
-            } else {
-                return item;
-            }
-        });
-        setData(updatedTableData);
-        setAssignDeleDialogOpen(false);
-    }
-   
 
     const handleBlockRow = (rowData) => {
         //console.log('idhandle::', rowData.id, ' ', rowData.enableEditIcon);
@@ -283,19 +145,6 @@ export const MemberDeleContactsTable = () => {
                         key={count}
                         title="Claims"
                         class="input"
-                        localization={{
-                            body: {
-                                emptyDataSourceMessage: (
-                                    <div
-                                        style={{
-                                            color: "#A71930",
-                                            fontWeight: "bold",
-                                        }}
-                                    >
-                                    </div>
-                                ),
-                            },
-                        }}
                         autoHeight={true}
                         icons={tableIcons}
                         data={tableData}
@@ -308,22 +157,7 @@ export const MemberDeleContactsTable = () => {
                             padding: "dense",
                             filtering: true,
                             search: false,
-                            pageSize: count < 10 ? parseInt(count) + 1 : 10,
-                            pageSizeOptions: [
-                                5,
-                                10,
-                                20,
-                                { value: count > 0 ? count : 1, label: "All" },
-                            ],
-                            searchFieldStyle: {
-                                padding: "0px 0px 0px 10px",
-                                margin: "0px 0 0 0 ",
-                                disableUnderline: true,
-                                border: "0.5px solid #A19D9D",
-                                height: "100%",
-                                width: "18rem",
-                                borderRadius: "4px"
-                            },
+                            pageSize: count < 10 ? parseInt(count) + 1 : 10,   
                             showTitle: false,
                             toolbar: true,
                             doubleHorizontalScroll: false,
@@ -645,21 +479,6 @@ export const MemberDeleContactsTable = () => {
                                 ),
                             },
                             {
-                                title: "Preferred",
-                                field: "Preferred",
-                                filtering: false,
-                                cellStyle: {
-                                //    color: "#555151",
-                                    fontSize: commonFontSizes.bodyTwo + "rem",
-                                    fontWeight: 400,
-                                    minWidth: 140,
-                                    maxWidth: 140,
-                                },
-                                render: (rowData) => (
-                                    <RenderValue value={rowData.Preferred} />
-                                ),
-                            },
-                            {
                                 title: "Action",
                                 field: "Action",
                                 filtering: false,
@@ -721,41 +540,7 @@ export const MemberDeleContactsTable = () => {
                                 }   
                             },
                         ]}
-
-                        components={{
-                            Toolbar: (props) => (
-                                <Grid container style={{ height: "3.2rem" }}>
-                                    <Grid item xs={12} style={{ textAlign: "end", padding: "0.5rem" }}>
-                                        <Button className={classes1.searchbuttonEnable} style={{ textTransform: "none", width: "9rem", borderRadius: '0px', backgroundColor: "#217e76" }}
-                                            onClick={handleDialog}
-                                            variant="contained"
-                                        >
-                                            Assign Contact
-                                        </Button>
-                                        <div style={{ width: "13rem" }}>
-                                            <MTableToolbar {...props} />
-                                        </div>
-                                    </Grid>
-                                </Grid>
-                            ),
-                            Pagination: (props) => (
-                                <div style={{ borderTop: "1px solid lightgrey" }}>
-                                    <TablePagination
-                                        {...props}
-                                        style={{
-                                            backgroundColor: "",
-                                            float: "right",
-                                            maxHeight: "2.8rem",
-                                            overflow: "hidden",
-                                            paddingBottom: "0.5rem"
-                                        }}
-                                        rowsPerPageOptions={getPageSizeOptions()}
-                                    />
-                                </div>
-                            ),
-                        }}
                     />
-                    {/* {assignDialogOpen && <AssingDeleDialog handleAssignCloseDialog={handleAssignCloseDialog} handleAddRow={handleAddRow} dialogSelectedRow={selectedRow} />} */}
                     {assignDialogOpen && <AssignDeleTableDialog handleDeleTableClose={() => setAssignDeleDialogOpen(false)}
                         handleAddRow={handleAddRow} handleReplaceRow={handleReplaceRow}
                     />}
