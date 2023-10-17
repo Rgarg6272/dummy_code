@@ -17,10 +17,7 @@ import AssingDeleDialog from "../../pages/DelegatedContacts/AssignDeleDialog";
 import AssignDeleTableDialog from "../../pages/DelegatedContacts/AssignDeleTableDialog";
 
 export const MemberDeleContactsTable = () => {
-    const spanStyle = {
-        fontFamily: "Material Symbols Outlined, sans-serif",
-        fontVariationSettings: "'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24"
-    }
+    
     const [tableData, setData] = useState(memberDelegatedContactData);
     const [data2, setData2] = useState([]);
     const [snackOpen, setSnackOpen] = useState(false);
@@ -38,12 +35,6 @@ export const MemberDeleContactsTable = () => {
     const classes = useStyles();
     const classes1 = searchButtonStyles();
 
-    let nullObject = null;
-    let data1 = {};
-    let noData1 = "";
-
-    const history = useHistory();
-
     const getPageSizeOptions = () => {
         return [5, 10];
     };
@@ -54,33 +45,7 @@ export const MemberDeleContactsTable = () => {
         setAddHeader("Add New Contact");
         setDialogOpen(true);
     }
-
-    const handleCloseDialog = (memberFormData, flag, RowId) => {
-        setDialogOpen(false);
-        if (flag === 'edit') {
-            if (memberFormData) {
-                const updatedData = tableData.map(item => {
-                    if (item.id === RowId) {
-                        const id = RowId;
-                        return { ...memberFormData, id }; //Replace row with new data and same id
-                    }
-                    return item;
-                });
-                setData(updatedData);
-                setDialogOpen(false);
-            } else {
-                setDialogOpen(false);
-            }
-        } else {
-            if (memberFormData) {
-                setData([...tableData, memberFormData]);
-                setDialogOpen(false);
-            } else {
-                setDialogOpen(false);
-            }
-        }
-    }
-
+    
     useEffect(() => {
         setCount(tableData && tableData.length > 0 ? tableData.length : 0);
     }, []);
@@ -109,34 +74,7 @@ export const MemberDeleContactsTable = () => {
         console.log("which row", rowData);
         setData([...tableData, rowData]);
     };
-
-    const handleBlockRow = (rowData) => {
-        //console.log('idhandle::', rowData.id, ' ', rowData.enableEditIcon);
-        const id = rowData.id - 1;
-        if (rowData.enableEditIcon === false) {
-            setRowColors((prevRowColors) => ({
-                ...prevRowColors,
-                [id]: "rgba(0, 0, 0, 0.38)"
-            }));
-            const updatedData = tableData.map((item) =>
-                item.tableData.id === id ? { ...item, enableEditIcon: true } : item
-            );
-            //console.log('res::', updatedData)
-            setData(updatedData);
-        } else {
-            //console.log('else')
-            setRowColors((prevRowColors) => ({
-                ...prevRowColors,
-                [id]: "#555151"
-            }));
-            const updatedData = tableData.map((item) =>
-                item.tableData.id === id ? { ...item, enableEditIcon: false } : item
-            );
-            // console.log('res::', updatedData)
-            setData(updatedData);
-        }
-    }
-
+  
     return (
         <div>
             <MuiThemeProvider theme={theme}>
@@ -535,19 +473,11 @@ export const MemberDeleContactsTable = () => {
                                             </IconButton>
                                         </div>
                                         );
-                                       
                                     }
                                 }   
                             },
                         ]}
                     />
-                    {assignDialogOpen && <AssignDeleTableDialog handleDeleTableClose={() => setAssignDeleDialogOpen(false)}
-                        handleAddRow={handleAddRow} handleReplaceRow={handleReplaceRow}
-                    />}
-                    {assignDeleDialogOpen && <AssignDeleTableDialog flag="replace" handleDeleTableClose={() => setAssignDeleDialogOpen(false)}
-                        handleAddRow={handleAddRow} handleReplaceRow={handleReplaceRow}
-                    />}
-
                 </div>
             </MuiThemeProvider>
         </div>
