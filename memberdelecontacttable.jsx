@@ -2,7 +2,7 @@ import { forwardRef } from "react";
 import React, { useEffect, useState } from "react";
 import { MuiThemeProvider, createMuiTheme } from "@material-ui/core/styles";
 import MaterialTable, { MTableToolbar } from "material-table";
-import "jspdf-autotable";
+import "jspdf-autotable"; 
 import { TablePagination, IconButton, Grid, makeStyles } from "@material-ui/core";
 import { useHistory } from "react-router-dom";
 import Button from "@material-ui/core/Button";
