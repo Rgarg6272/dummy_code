@@ -17,7 +17,10 @@ import AssingDeleDialog from "../../pages/DelegatedContacts/AssignDeleDialog";
 import AssignDeleTableDialog from "../../pages/DelegatedContacts/AssignDeleTableDialog";
 
 export const MemberDeleContactsTable = () => {
-    
+    const spanStyle = {
+        fontFamily: "Material Symbols Outlined, sans-serif",
+        fontVariationSettings: "'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24"
+    }
     const [tableData, setData] = useState(memberDelegatedContactData);
     const [data2, setData2] = useState([]);
     const [snackOpen, setSnackOpen] = useState(false);
@@ -35,6 +38,12 @@ export const MemberDeleContactsTable = () => {
     const classes = useStyles();
     const classes1 = searchButtonStyles();
 
+    let nullObject = null;
+    let data1 = {};
+    let noData1 = "";
+
+    const history = useHistory();
+
     const getPageSizeOptions = () => {
         return [5, 10];
     };
@@ -45,7 +54,37 @@ export const MemberDeleContactsTable = () => {
         setAddHeader("Add New Contact");
         setDialogOpen(true);
     }
+
+    const handleCloseDialog = (memberFormData, flag, RowId) => {
+        setDialogOpen(false);
+        if (flag === 'edit') {
+            if (memberFormData) {
+                const updatedData = tableData.map(item => {
+                    if (item.id === RowId) {
+                        const id = RowId;
+                        return { ...memberFormData, id }; //Replace row with new data and same id
+                    }
+                    return item;
+                });
+                setData(updatedData);
+                setDialogOpen(false);
+            } else {
+                setDialogOpen(false);
+            }
+        } else {
+            if (memberFormData) {
+                setData([...tableData, memberFormData]);
+                setDialogOpen(false);
+            } else {
+                setDialogOpen(false);
+            }
+        }
+    }
+
+   
+     
     
+
     useEffect(() => {
         setCount(tableData && tableData.length > 0 ? tableData.length : 0);
     }, []);
@@ -60,7 +99,6 @@ export const MemberDeleContactsTable = () => {
     const handleDialog = () => {
         setAssignDialogOpen(true);
     }
-
     const handleOpenDialog = (rowData) => {
         setSelectedRow(rowData);
         setAssignDeleDialogOpen(true);
@@ -74,7 +112,55 @@ export const MemberDeleContactsTable = () => {
         console.log("which row", rowData);
         setData([...tableData, rowData]);
     };
-  
+
+    // Replace logic
+    const handleReplaceRow = (rowData) => {
+        //Replace the selected row in your tableData state with the rowData from the popup table
+        const updatedTableData = tableData.map((item) => {
+            if (item.id === rowData.id) {
+                return rowData;
+            } else {
+                return item;
+            }
+        });
+        setData(updatedTableData);
+        setAssignDeleDialogOpen(false);
+    }
+
+
+    const handleBlockRow = (rowData) => {
+        //console.log('idhandle::', rowData.id, ' ', rowData.enableEditIcon);
+        const id = rowData.id - 1;
+        if (rowData.enableEditIcon === false) {
+            setRowColors((prevRowColors) => ({
+                ...prevRowColors,
+                [id]: "rgba(0, 0, 0, 0.38)"
+            }));
+            const updatedData = tableData.map((item) =>
+                item.tableData.id === id ? { ...item, enableEditIcon: true } : item
+            );
+            //console.log('res::', updatedData)
+            setData(updatedData);
+        } else {
+            //console.log('else')
+            setRowColors((prevRowColors) => ({
+                ...prevRowColors,
+                [id]: "#555151"
+            }));
+            const updatedData = tableData.map((item) =>
+                item.tableData.id === id ? { ...item, enableEditIcon: false } : item
+            );
+            // console.log('res::', updatedData)
+            setData(updatedData);
+        }
+    }
+
+    const handleButtonSearch = (event) => {
+        if (event.target.innerText === "Search" || event.key === "Enter"){
+            console.log("button is working")
+        }
+    }
+
     return (
         <div>
             <MuiThemeProvider theme={theme}>
@@ -83,6 +169,19 @@ export const MemberDeleContactsTable = () => {
                         key={count}
                         title="Claims"
                         class="input"
+                        localization={{
+                            body: {
+                                emptyDataSourceMessage: (
+                                    <div
+                                        style={{
+                                            color: "#A71930",
+                                            fontWeight: "bold",
+                                        }}
+                                    >
+                                    </div>
+                                ),
+                            },
+                        }}
                         autoHeight={true}
                         icons={tableIcons}
                         data={tableData}
@@ -95,7 +194,22 @@ export const MemberDeleContactsTable = () => {
                             padding: "dense",
                             filtering: true,
                             search: false,
-                            pageSize: count < 10 ? parseInt(count) + 1 : 10,   
+                            pageSize: count < 10 ? parseInt(count) + 1 : 10,
+                            pageSizeOptions: [
+                                5,
+                                10,
+                                20,
+                                { value: count > 0 ? count : 1, label: "All" },
+                            ],
+                            searchFieldStyle: {
+                                padding: "0px 0px 0px 10px",
+                                margin: "0px 0 0 0 ",
+                                disableUnderline: true,
+                                border: "0.5px solid #A19D9D",
+                                height: "100%",
+                                width: "18rem",
+                                borderRadius: "4px"
+                            },
                             showTitle: false,
                             toolbar: true,
                             doubleHorizontalScroll: false,
@@ -127,14 +241,14 @@ export const MemberDeleContactsTable = () => {
                                 const id = row.tableData.id;
                                 console.log('id::', id)
                                 if (rowColors[id]) {
-                                  console.log('if::', rowColors[id], '  ', id)
-                                  return { color: rowColors[id] };
+                                    console.log('if::', rowColors[id], '  ', id)
+                                    return { color: rowColors[id] };
                                 } else {
-                                  return id % 2 === 0
-                                    ? { backgroundColor: "#F5F5F5", color: "#555151" }
-                                    : { backgroundColor: "#fff", color: "#555151" };
+                                    return id % 2 === 0
+                                        ? { backgroundColor: "#F5F5F5", color: "#555151" }
+                                        : { backgroundColor: "#fff", color: "#555151" };
                                 }
-                              },
+                            },
                         }}
 
                         columns={[
@@ -143,21 +257,20 @@ export const MemberDeleContactsTable = () => {
                                 field: "SubscriberID",
                                 filtering: true,
                                 cellStyle: {
-                                    // textDecoration: "underline",
-                                    //color: "#555151",
                                     fontSize: commonFontSizes.bodyTwo + "rem",
                                     fontWeight: 400,
-                                    minWidth: 160,
-                                    maxWidth: 160,
+                                    minWidth: 170,
+                                    maxWidth: 170,
                                 },
                                 filterComponent: (props) => <TextField
                                     style={{ height: "2rem" }}
                                     type="search"
                                     placeholder='Search'
                                     variant="outlined"
+                                    onKeyDown={handleButtonSearch}
                                     InputProps={{
                                         endAdornment: (
-                                            <InputAdornment position="end" >
+                                            <InputAdornment position="end">
                                                 <SearchIcon />
                                             </InputAdornment>
                                         )
@@ -175,7 +288,7 @@ export const MemberDeleContactsTable = () => {
                                 field: "JivaMemberID",
                                 filtering: true,
                                 cellStyle: {
-                                  //  color: "#555151",
+                                    //  color: "#555151",
                                     fontSize: commonFontSizes.bodyTwo + "rem",
                                     fontWeight: 400,
                                     minWidth: 160,
@@ -206,7 +319,7 @@ export const MemberDeleContactsTable = () => {
                                 field: "MemberFirstName",
                                 filtering: true,
                                 cellStyle: {
-                                   // color: "#555151",
+                                    // color: "#555151",
                                     fontSize: commonFontSizes.bodyTwo + "rem",
                                     fontWeight: 400,
                                     minWidth: 160,
@@ -240,7 +353,7 @@ export const MemberDeleContactsTable = () => {
                                 field: "MemberLastName",
                                 filtering: true,
                                 cellStyle: {
-                                  //  color: "#555151",
+                                    //  color: "#555151",
                                     fontSize: commonFontSizes.bodyTwo + "rem",
                                     fontWeight: 400,
                                     minWidth: 160,
@@ -274,7 +387,7 @@ export const MemberDeleContactsTable = () => {
                                 field: "Delegate",
                                 filtering: true,
                                 cellStyle: {
-                                   // color: "#555151",
+                                    // color: "#555151",
                                     fontSize: commonFontSizes.bodyTwo + "rem",
                                     fontWeight: 400,
                                     minWidth: 160,
@@ -306,12 +419,13 @@ export const MemberDeleContactsTable = () => {
                                 field: "Contact_Type",
                                 filtering: true,
                                 cellStyle: {
-                                  //  color: "#555151",
+                                    //  color: "#555151",
                                     fontSize: commonFontSizes.bodyTwo + "rem",
                                     fontWeight: 400,
                                     minWidth: 190,
                                     maxWidth: 190,
                                 },
+
                                 filterComponent: (props) => <TextField
                                     style={{
                                         height: "2rem", minWidth: 130,
@@ -333,7 +447,10 @@ export const MemberDeleContactsTable = () => {
                                 />,
 
                                 render: (rowData) => (
-                                    <RenderValue value={rowData.Contact_Type} />
+                                    // <RenderValue value={rowData.Contact_Type} />
+                                    <span style={{ color: rowData.Contact_Type === "Unassigned" ? "#a71930" : "" }}>
+                                        {rowData.Contact_Type}
+                                    </span>
                                 ),
                             },
                             {
@@ -341,12 +458,13 @@ export const MemberDeleContactsTable = () => {
                                 field: "Contact_Name",
                                 filtering: true,
                                 cellStyle: {
-                                   // color: "#555151",
+                                    // color: "#555151",
                                     fontSize: commonFontSizes.bodyTwo + "rem",
                                     fontWeight: 400,
                                     minWidth: 160,
                                     maxWidth: 160,
                                 },
+
                                 filterComponent: (props) => <TextField
                                     style={{
                                         height: "2rem", minWidth: 130,
@@ -368,7 +486,10 @@ export const MemberDeleContactsTable = () => {
                                 />,
 
                                 render: (rowData) => (
-                                    <RenderValue value={rowData.Contact_Name} />
+                                    // <RenderValue value={rowData.Contact_Type} />
+                                    <span style={{ color: rowData.Contact_Name === "Unassigned" ? "#a71930" : "" }}>
+                                        {rowData.Contact_Name}
+                                    </span>
                                 ),
                             },
                             {
@@ -376,7 +497,7 @@ export const MemberDeleContactsTable = () => {
                                 field: "Cell_Phone",
                                 filtering: false,
                                 cellStyle: {
-                                  //  color: "#555151",
+                                    //  color: "#555151",
                                     fontSize: commonFontSizes.bodyTwo + "rem",
                                     fontWeight: 400,
                                     minWidth: 140,
@@ -391,7 +512,7 @@ export const MemberDeleContactsTable = () => {
                                 field: "Work_Phone",
                                 filtering: false,
                                 cellStyle: {
-                                   // color: "#555151",
+                                    // color: "#555151",
                                     fontSize: commonFontSizes.bodyTwo + "rem",
                                     fontWeight: 400,
                                     minWidth: 140,
@@ -406,7 +527,7 @@ export const MemberDeleContactsTable = () => {
                                 field: "Email",
                                 filtering: false,
                                 cellStyle: {
-                                   // color: "#555151",
+                                    // color: "#555151",
                                     fontSize: commonFontSizes.bodyTwo + "rem",
                                     fontWeight: 400,
                                     minWidth: 140,
@@ -417,64 +538,95 @@ export const MemberDeleContactsTable = () => {
                                 ),
                             },
                             {
+                                title: "Preferred",
+                                field: "Preferred",
+                                filtering: false,
+                                cellStyle: {
+                                    //    color: "#555151",
+                                    fontSize: commonFontSizes.bodyTwo + "rem",
+                                    fontWeight: 400,
+                                    minWidth: 140,
+                                    maxWidth: 140,
+                                },
+                                render: (rowData) => (
+                                    <RenderValue value={rowData.Preferred} />
+                                ),
+                            },
+                            {
+                                title: "Record Active",
+                                field: "Record_Active",
+                                filtering: false,
+                                cellStyle: {
+                                    //    color: "#555151",
+                                    fontSize: commonFontSizes.bodyTwo + "rem",
+                                    fontWeight: 400,
+                                    minWidth: 140,
+                                    maxWidth: 140,
+                                },
+                                render: (rowData) => (
+                                    <RenderValue value={rowData.Record_Active} />
+                                ),
+                            },
+                            {
                                 title: "Action",
                                 field: "Action",
                                 filtering: false,
                                 cellStyle: {
-                                  //  color: "#555151",
+                                    //  color: "#555151",
                                     fontSize: commonFontSizes.bodyTwo + "rem",
                                     fontWeight: 400,
                                     minWidth: 150,
                                     maxWidth: 150,
                                 },
                                 render: (rowData) => {
-                                    if(rowData.Contact_Type === 'Unassigned'){
-                                        return  (
-                                            <div style={{ dispaly: "flex" }}>
-                                                 <IconButton
-                                            style={{ padding: "0px 6px 0px 2px" }}
-                                            aria-label="edit"
-                                        >
-                                            <Button style={{ textTransform: 'capitalize', fontWeight: "bold", color: "#A71930" }} onClick={() => handleOpenDialog(rowData)}>Assign</Button>
-                                        </IconButton>
-                                            </div>
-                                        );
-                                    } else{
+                                    if (rowData.Contact_Type === 'Unassigned') {
                                         return (
                                             <div style={{ dispaly: "flex" }}>
-                                            <IconButton
-                                                style={{ padding: "0px 6px 0px 2px" }}
-                                                aria-label="edit"
-                                                // onClick={() =>{ handleOpenDialog(rowData) && rowData.enableEditIcon == false}}
-                                                onClick={() => {
-                                                    if(rowData.enableEditIcon == false) {
-                                                        handleOpenDialog(rowData)
-                                                    }
-                                                }}
-                                            >
-                                                <Button style={{ textTransform: 'capitalize', fontWeight: "700" }} className={rowData.enableEditIcon == false ? classes.enableIcon : classes.disableIcon}  >Replace</Button>
-                                            </IconButton>
-                                            <span>|</span>
-                                            <IconButton
-                                                style={{ padding: "0px 6px 0px 8px" }}
-                                                aria-label="edit"
-                                                onClick={() => {
-                                                    handleBlockRow(rowData)
-                                                }}
-                                            >
-                                                {rowData.enableEditIcon == false ?
-                                                    <span class="material-symbols-outlined e7fe" style={{ color: '#861426', width: "1.2rem", height: "1.2rem", cursor: "pointer", fontSize: 1.25rem }}>
-                                                        person_off
-                                                    </span> :
-                                                    <span class="material-symbols-outlined e7fe" style={{ color: '#861426', width: "1.2rem", height: "1.2rem", cursor: "pointer", fontSize: 1.25rem }}>
-                                                        person_add
-                                                    </span>
-                                                }
-                                            </IconButton>
-                                        </div>
+                                                <IconButton
+                                                    style={{ padding: "0px 6px 0px 2px" }}
+                                                    aria-label="edit"
+                                                >
+                                                    <Button style={{ textTransform: 'capitalize', fontWeight: "bold", color: "#A71930" }} onClick={() => handleOpenDialog(rowData)}>Assign</Button>
+                                                </IconButton>
+                                            </div>
                                         );
+                                    } else {
+                                        return (
+                                            <div style={{ dispaly: "flex" }}>
+                                                <IconButton
+                                                    style={{ padding: "0px 6px 0px 2px" }}
+                                                    aria-label="edit"
+                                                    // onClick={() =>{ handleOpenDialog(rowData) && rowData.enableEditIcon == false}}
+                                                    onClick={() => {
+                                                        if (rowData.enableEditIcon == false) {
+                                                            handleOpenDialog(rowData)
+                                                        }
+                                                    }}
+                                                >
+                                                    <Button style={{ textTransform: 'capitalize', fontWeight: "700" }} className={rowData.enableEditIcon == false ? classes.enableIcon : classes.disableIcon}  >Replace</Button>
+                                                </IconButton>
+                                                <span>|</span>
+                                                <IconButton
+                                                    style={{ padding: "0px 6px 0px 8px" }}
+                                                    aria-label="edit"
+                                                    onClick={() => {
+                                                        handleBlockRow(rowData)
+                                                    }}
+                                                >
+                                                    {rowData.enableEditIcon == false ?
+                                                        <span class="material-symbols-outlined e7fe" style={{ color: '#861426', width: "1.2rem", height: "1.2rem", cursor: "pointer", fontSize: "1.25rem" }}>
+                                                            person_off
+                                                    </span> :
+                                                        <span class="material-symbols-outlined e7fe" style={{ color: '#861426', width: "1.2rem", height: "1.2rem", cursor: "pointer", fontSize: "1.25rem" }}>
+                                                            person_add
+                                                    </span>
+                                                    }
+                                                </IconButton>
+                                            </div>
+                                        );
+
                                     }
-                                }   
+                                }
                             },
                         ]}
                     />
