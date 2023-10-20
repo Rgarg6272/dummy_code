@@ -76,16 +76,11 @@ export const AddNewCareDialog = ({ handleCloseDialog, tableDataId, addData, addH
     useEffect(() => {
         console.log('addData::',addData)
         if (flag === 'edit') {
-            // console.log('1::', delegateData);
-            //fetching value from array
             const updateData = delegateData.map((inputData) => {
-                //console.log('11:', inputData.value);
                 return {
                     ...rowValue, value: inputData.value
                 }
             })
-            // console.log("111::", updateData, ' ', updateData[0].value)
-            //Mapping the value for table row
             setMemberContactData(item => ({
                 ...item,
                 Delegate: updateData[0].value,
@@ -98,7 +93,6 @@ export const AddNewCareDialog = ({ handleCloseDialog, tableDataId, addData, addH
                 Action: "",
                 enableDatePicker: false,
             }))
-            // console.log('memberContactData_1::', memberContactData)
             setButtonData(saveButton);
         } else {
             setButtonData(addButtons);
@@ -106,7 +100,6 @@ export const AddNewCareDialog = ({ handleCloseDialog, tableDataId, addData, addH
     }, [])
 
     const handleClose = () => {
-        //console.log('memberContactData_1::', memberContactData)
         setOpen(false)
         handleCloseDialog("", flag, rowId); // callback to set dialog to be closed
     };
@@ -131,16 +124,12 @@ export const AddNewCareDialog = ({ handleCloseDialog, tableDataId, addData, addH
             setMemberContactData({
                 ...memberContactData,
                 [event.target.name]: event.target.value,
-                // [event.target.name]: event.target.value.replace(/\s/g, ""),
             });
         }
-        // console.log('memberFormData::',memberFormData);
         const updateMemberData = delegateData.map((inputData) => {
-            // console.log('date::', event.target.name, ' ', inputData)
             if (inputData.name === event.target.name) {
                 return {
                     ...inputData,
-                    // value: event.target.value.replace(/\s/g, "")
                     value: event.target.value
                 };
             } else {
@@ -150,12 +139,10 @@ export const AddNewCareDialog = ({ handleCloseDialog, tableDataId, addData, addH
             }
         });
         console.log('updateMemberData:', updateMemberData)
-        //During input changes, binding values into 'value' attribute
         setDelegateInputData(updateMemberData);
     };
 
     const handleButtonSearch = (event) => {
-        //console.log('handleButtonsearch::', event.target.innerText, ' ', memberContactData)
         if (event.target.innerText === "Clear All") {
             handleClearAll();
         } else if (
@@ -163,11 +150,8 @@ export const AddNewCareDialog = ({ handleCloseDialog, tableDataId, addData, addH
             (event.keyCode == 13 && event.key === "Enter")
         ) {
             if (addHeader === 'Add New Level of Care') {
-
-                // getMemberDetails(memberFormData);
                 setSearchDialogOpen(true);
             } else {
-                //console.log('memberContactData::', memberContactData, ' ', delegateData)
                 getMemberDetails(memberContactData);
             }
         }
@@ -179,7 +163,6 @@ export const AddNewCareDialog = ({ handleCloseDialog, tableDataId, addData, addH
     }
 
     const getMemberDetails = (memberFormData) => {
-        //console.log("memberFormData::", addHeader);
         if (addHeader === 'Add New Level of Care') {
             const filter_obj = {
                 Entity: memberFormData.Entity,
@@ -193,7 +176,6 @@ export const AddNewCareDialog = ({ handleCloseDialog, tableDataId, addData, addH
                 flag: ""
             };
             const { Action, enableDatePicker, id, ...newFilter_obj } = filter_obj; //we can pass newFilter_obj to backend
-            //console.log("filter_obj::", filter_obj)
             setOpen(false)
             handleCloseDialog(filter_obj, flag, rowId) // callback to set dialog to be closed
         } else {
@@ -377,10 +359,6 @@ export const AddNewCareDialog = ({ handleCloseDialog, tableDataId, addData, addH
                     <Grid container>
                         <Grid
                             item
-                            // xl={3}
-                            // lg={3}
-                            // md={3}
-                            // sm={6}
                             xs={12}
                             className={classes.buttonFields} style={{ display: "flex", flexDirection: "row", alignItems: "end", justifyContent: "end", paddingTop: "1rem", }}
                         >
@@ -391,14 +369,12 @@ export const AddNewCareDialog = ({ handleCloseDialog, tableDataId, addData, addH
                             >
                                 Search Button
                              </label>
-                            {/* hiding the above label for alignment when accessibility increase the font size dont remove it */}
                             <SearchButton
                                 buttonData={buttonData}
                                 id="Advanced"
                                 searchBtnDisable={searchBtnDisable}
                                 clearBtnDisable={clearBtnDisable}
                                 handleButton={handleButtonSearch}
-                            // accessibilityFontSize={accessibilityFontSize}
                             />
                         </Grid>
                     </Grid>
