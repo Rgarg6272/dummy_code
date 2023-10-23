@@ -2,106 +2,93 @@ import { forwardRef } from "react";
 import React, { useEffect, useState } from "react";
 import { MuiThemeProvider, createMuiTheme } from "@material-ui/core/styles";
 import MaterialTable, { MTableToolbar } from "material-table";
-import "jspdf-autotable"; 
+import ViewColumn from "@material-ui/icons/ViewColumn";
+import "jspdf-autotable";
 import { TablePagination, IconButton, Grid, makeStyles } from "@material-ui/core";
 import { useHistory } from "react-router-dom";
 import Button from "@material-ui/core/Button";
 import { commonFontSizes } from "../../css/FontSizes";
-import { DelegatedContactData, AdDelegateContactData } from "../../../constants/memberData";
-import { memberDelegatedContactData } from "../../../constants/memberData";
+import { DelegatedContactData, AdDelegateContactData, memberDelegatedContactData } from "../../../constants/memberData";
 import { InputAdornment, TextField } from "@material-ui/core";
 import SearchIcon from '@material-ui/icons/Search';
 import { searchButtonStyles } from "../../css/SearchButtonStyles";
 import { useStyles } from "../../css/MemberDetails";
-import AssingDeleDialog from "../../pages/DelegatedContacts/AssignDeleDialog";
-import AssignDeleTableDialog from "../../pages/DelegatedContacts/AssignDeleTableDialog";
+import AssignDeleDialog from "../../common/AssignDeleDialog";
+import AssignDeleTableDialog from "../../common/AssignDeleTableDialog";
+import { Loader } from "../../common/Loader";
+import { serviceUrls } from "../../../utils/serviceUrls";
+import { requestWrapper } from "../../../utils/requestWrapper";
+import SearchDialog from "../../common/SearchDialog";
 
 export const MemberDeleContactsTable = () => {
-    const spanStyle = {
-        fontFamily: "Material Symbols Outlined, sans-serif",
-        fontVariationSettings: "'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24"
-    }
-    const [tableData, setData] = useState(memberDelegatedContactData);
+
     const [data2, setData2] = useState([]);
     const [snackOpen, setSnackOpen] = useState(false);
     const [snackSev, setSnackSev] = useState("");
     const [snackMsg, setSnackMsg] = useState("");
     const tableRef = React.createRef();
     const [showDialog, setshowDialog] = useState(false);
-    const [count, setCount] = useState(tableData && tableData.length > 0 ? tableData.length : 0);
     const [memberInfo, setMemberInfo] = useState(false);
     const [dialogOpen, setDialogOpen] = useState(false);
     const [addHeader, setAddHeader] = useState("");
     const [addData, setAddData] = useState("");
     const [flag, setFlag] = useState("");
+    const [subId, setSubId] = useState("");
     const [rowId, setRowId] = useState("");
-    const classes = useStyles();
-    const classes1 = searchButtonStyles();
-
-    let nullObject = null;
-    let data1 = {};
-    let noData1 = "";
-
-    const history = useHistory();
-
-    const getPageSizeOptions = () => {
-        return [5, 10];
-    };
-
-    const AddNewLevel = (flag) => {
-        setAddData(AdDelegateContactData);
-        setFlag(flag);
-        setAddHeader("Add New Contact");
-        setDialogOpen(true);
-    }
-
-    const handleCloseDialog = (memberFormData, flag, RowId) => {
-        setDialogOpen(false);
-        if (flag === 'edit') {
-            if (memberFormData) {
-                const updatedData = tableData.map(item => {
-                    if (item.id === RowId) {
-                        const id = RowId;
-                        return { ...memberFormData, id }; //Replace row with new data and same id
-                    }
-                    return item;
-                });
-                setData(updatedData);
-                setDialogOpen(false);
-            } else {
-                setDialogOpen(false);
-            }
-        } else {
-            if (memberFormData) {
-                setData([...tableData, memberFormData]);
-                setDialogOpen(false);
-            } else {
-                setDialogOpen(false);
-            }
-        }
-    }
-
-   
-     
-    
-
-    useEffect(() => {
-        setCount(tableData && tableData.length > 0 ? tableData.length : 0);
-    }, []);
-
     const [assignDialogOpen, setAssignDialogOpen] = useState(false);
     const [assignDeleDialogOpen, setAssignDeleDialogOpen] = useState(false);
     const [showAssignDialog, setShowAssignDialog] = useState(false);
     const [showReplaceDialog, setShowReplaceDialog] = useState(false);
     const [selectedRow, setSelectedRow] = useState(null);
     const [rowColors, setRowColors] = useState("");
+    const [loading, setLoading] = useState(false);
+    const [pageSize, setPageSize] = useState(50)
+    const [noData, setNoData] = useState([]);
+    const [resultData, setResultData] = useState([]);
+    const [searchDialogOpen, setSearchDialogOpen] = useState(false);
+    const [content, setContent] = useState();
+    const [rowData, setRowData] = useState("");
+    const [actionFlagVal, setActionFlagVal] = useState("");
+    const [responseData, setResponseData] = useState("");
+    const [searchData, setSearchData] = useState(false);
+    const [filterName, setFilterName] = useState("");
+    const [filterValue, setFilterValue] = useState('');
 
-    const handleDialog = () => {
-        setAssignDialogOpen(true);
+    const handleButtonSearch = (event, fieldName) => {
+        if (event.keyCode == 13 && event.key === "Enter") {
+            setSearchData(true);
+            setFilterName(fieldName);
+            setFilterValue(event.target.value);
+            tableRef.current.onQueryChange();
+        }
     }
-    const handleOpenDialog = (rowData) => {
-        setSelectedRow(rowData);
-        setAssignDeleDialogOpen(true);
+
+    const EditContactRowById = (rowData, flag) => {
+        const updateMemberData = AdDelegateContactData.map((inputData) => {
+            setRowId(rowData.id);
+            let res = Object.values(rowData);
+            if (rowData.flag === 'Add') {
+                return {
+                    ...inputData,
+                    value: res[inputData.id - 1]
+                };
+            } else {
+                return {
+                    ...inputData,
+                    value: res[inputData.id]
+                };
+            }
+        })
+        setAddData(updateMemberData);
+        setFlag(flag);
+        setAddHeader("Add New Contact");
+        setDialogOpen(true);
+    }
+
+    const handleOpenDialog = (value, subscriberId) => {
+        setFlag(value);
+        setSubId(subscriberId);
+        setAssignDialogOpen(true);
     }
 
     const handleAssignCloseDialog = () => {
@@ -109,55 +96,35 @@ export const MemberDeleContactsTable = () => {
     }
 
     const handleAddRow = (rowData) => {
-        console.log("which row", rowData);
-        setData([...tableData, rowData]);
+        setData([...resultData, rowData]);
     };
 
-    // Replace logic
-    const handleReplaceRow = (rowData) => {
-        //Replace the selected row in your tableData state with the rowData from the popup table
-        const updatedTableData = tableData.map((item) => {
-            if (item.id === rowData.id) {
-                return rowData;
-            } else {
-                return item;
-            }
-        });
-        setData(updatedTableData);
-        setAssignDeleDialogOpen(false);
+    const handleSearchDialog = () => {
+        setSearchDialogOpen(false);
     }
 
-
-    const handleBlockRow = (rowData) => {
-        //console.log('idhandle::', rowData.id, ' ', rowData.enableEditIcon);
-        const id = rowData.id - 1;
-        if (rowData.enableEditIcon === false) {
-            setRowColors((prevRowColors) => ({
-                ...prevRowColors,
-                [id]: "rgba(0, 0, 0, 0.38)"
-            }));
-            const updatedData = tableData.map((item) =>
-                item.tableData.id === id ? { ...item, enableEditIcon: true } : item
-            );
-            //console.log('res::', updatedData)
-            setData(updatedData);
-        } else {
-            //console.log('else')
-            setRowColors((prevRowColors) => ({
-                ...prevRowColors,
-                [id]: "#555151"
-            }));
-            const updatedData = tableData.map((item) =>
-                item.tableData.id === id ? { ...item, enableEditIcon: false } : item
-            );
-            // console.log('res::', updatedData)
-            setData(updatedData);
+    const handleShowMemberTable = (res) => {
+        //console.log('res::', res);
+        if (res == 'Error' || res == 'NoData') {
+            setSearchDialogOpen(false);
+        } else if (res == 'N') {
+            tableRef.current.onQueryChange();
+            setSearchDialogOpen(false);
+        } else if (res == 'Y') {
+            setContent("Member already has a contact assigned. Do you wish to deactivate the existing contact and activate this instead?");
+            setActionFlagVal('NE');
+            setSearchDialogOpen(true);
         }
     }
 
-    const handleButtonSearch = (event) => {
-        if (event.target.innerText === "Search" || event.key === "Enter"){
-            console.log("button is working")
+    const handleBlockRow = (rowData) => {
+        setRowData(rowData);
+        setActionFlagVal('NE');
+        setSearchDialogOpen(true);
+        if (rowData.Record_Active == 'Y') {
+            setContent('Do you confirm to deactivate the contact?')
+        } else {
+            setContent('Do you confirm to activate the contact?')
         }
     }
 
@@ -166,8 +133,8 @@ export const MemberDeleContactsTable = () => {
             <MuiThemeProvider theme={theme}>
                 <div class="tableContainer1">
                     <MaterialTable
-                        key={count}
-                        title="Claims"
+                        // key={count}
+                        title="dmc"
                         class="input"
                         localization={{
                             body: {
@@ -178,13 +145,16 @@ export const MemberDeleContactsTable = () => {
                                             fontWeight: "bold",
                                         }}
                                     >
+                                        {" "}
+                                        {noData}{" "}
+                                        {/* No Data Found {""} */}
                                     </div>
                                 ),
                             },
                         }}
                         autoHeight={true}
                         icons={tableIcons}
-                        data={tableData}
+                        // data={resultData}
                         tableRef={tableRef}
                         options={{
                             detailPanelType: "single",
@@ -192,15 +162,12 @@ export const MemberDeleContactsTable = () => {
                             maxBodyHeight: "45vh",
                             overflowY: "hidden !important",
                             padding: "dense",
-                            filtering: true,
+                            filtering: resultData.length > 0 ? true : false,
                             search: false,
-                            pageSize: count < 10 ? parseInt(count) + 1 : 10,
-                            pageSizeOptions: [
-                                5,
-                                10,
-                                20,
-                                { value: count > 0 ? count : 1, label: "All" },
-                            ],
+                            pagination: true,
+                            paginationPosition: 'bottom',
+                            pageSize: pageSize,
+                            pageSizeOptions: [5, 10, 50],
                             searchFieldStyle: {
                                 padding: "0px 0px 0px 10px",
                                 margin: "0px 0 0 0 ",
@@ -210,38 +177,14 @@ export const MemberDeleContactsTable = () => {
                                 width: "18rem",
                                 borderRadius: "4px"
                             },
-                            showTitle: false,
-                            toolbar: true,
-                            doubleHorizontalScroll: false,
-                            headerStyle: {
-                                whiteSpace: "nowrap",
-                                position: "sticky",
-                                fontWeight: 700,
-                                fontSize: commonFontSizes.bodyTwo + "rem",
-                                color: "#2C2B2C",
-                                borderTop: "0.0625em solid lightgray",
-                            },
-                            filterRowStyle: {
-                                left: "0",
-                                position: "sticky",
-                                top: 43,
-                                background: "#fff",
-                                padding: "0.3em",
-                                width: "100%",
-                                zIndex: 1,
-                            },
-                            cellStyle: {
-                                whiteSpace: "nowrap",
-                                fontSize: commonFontSizes.bodyTwo + "rem",
-                                zIndex: 2,
-                                cursor: "no-drop",
-                                fontWeight: 400
-                            },
                             rowStyle: (row) => {
-                                const id = row.tableData.id;
-                                console.log('id::', id)
-                                if (rowColors[id]) {
-                                    console.log('if::', rowColors[id], '  ', id)
+                                const id = row.id;
+                                const active = row.Record_Active;
+                                //console.log('row::', id)
+                                if (active == 'N') {
+                                    return { color: 'lightgrey' };
+                                } else if (rowColors[id]) {
+                                    //console.log('if::', rowColors[id], '  ', id)
                                     return { color: rowColors[id] };
                                 } else {
                                     return id % 2 === 0
@@ -253,139 +196,9 @@ export const MemberDeleContactsTable = () => {
 
                         columns={[
                             {
-                                title: "Subscriber ID",
-                                field: "SubscriberID",
-                                filtering: true,
-                                cellStyle: {
-                                    fontSize: commonFontSizes.bodyTwo + "rem",
-                                    fontWeight: 400,
-                                    minWidth: 170,
-                                    maxWidth: 170,
-                                },
-                                filterComponent: (props) => <TextField
-                                    style={{ height: "2rem" }}
-                                    type="search"
-                                    placeholder='Search'
-                                    variant="outlined"
-                                    onKeyDown={handleButtonSearch}
-                                    InputProps={{
-                                        endAdornment: (
-                                            <InputAdornment position="end">
-                                                <SearchIcon />
-                                            </InputAdornment>
-                                        )
-                                    }}
-                                    onChange={(event) => {
-                                        props.onFilterChanged(props.columnDef.tableData.id, event.target.value);
-                                    }}
-                                />,
-                                render: (rowData) => (
-                                    <RenderValue value={rowData.SubscriberID} />
-                                ),
-                            },
-                            {
-                                title: "Jiva Member ID",
-                                field: "JivaMemberID",
-                                filtering: true,
-                                cellStyle: {
-                                    //  color: "#555151",
-                                    fontSize: commonFontSizes.bodyTwo + "rem",
-                                    fontWeight: 400,
-                                    minWidth: 160,
-                                    maxWidth: 160,
-                                },
-                                filterComponent: (props) => <TextField
-                                    style={{ height: "2rem" }}
-                                    type="search"
-                                    placeholder='Search'
-                                    variant="outlined"
-                                    InputProps={{
-                                        endAdornment: (
-                                            <InputAdornment position="end">
-                                                <SearchIcon />
-                                            </InputAdornment>
-                                        )
-                                    }}
-                                    onChange={(event) => {
-                                        props.onFilterChanged(props.columnDef.tableData.id, event.target.value);
-                                    }}
-                                />,
-                                render: (rowData) => (
-                                    <RenderValue value={rowData.JivaMemberID} />
-                                ),
-                            },
-                            {
-                                title: "Member First Name",
-                                field: "MemberFirstName",
-                                filtering: true,
-                                cellStyle: {
-                                    // color: "#555151",
-                                    fontSize: commonFontSizes.bodyTwo + "rem",
-                                    fontWeight: 400,
-                                    minWidth: 160,
-                                    maxWidth: 160,
-                                },
-                                filterComponent: (props) => <TextField
-                                    style={{
-                                        height: "2rem", minWidth: 130,
-                                        maxWidth: 130,
-                                    }}
-                                    type="search"
-                                    placeholder='Search'
-                                    variant="outlined"
-                                    InputProps={{
-                                        endAdornment: (
-                                            <InputAdornment position="end">
-                                                <SearchIcon />
-                                            </InputAdornment>
-                                        )
-                                    }}
-                                    onChange={(event) => {
-                                        props.onFilterChanged(props.columnDef.tableData.id, event.target.value);
-                                    }}
-                                />,
-                                render: (rowData) => (
-                                    <RenderValue value={rowData.MemberFirstName} />
-                                ),
-                            },
-                            {
-                                title: "Member Last Name",
-                                field: "MemberLastName",
-                                filtering: true,
-                                cellStyle: {
-                                    //  color: "#555151",
-                                    fontSize: commonFontSizes.bodyTwo + "rem",
-                                    fontWeight: 400,
-                                    minWidth: 160,
-                                    maxWidth: 160,
-                                },
-                                filterComponent: (props) => <TextField
-                                    style={{
-                                        height: "2rem", minWidth: 130,
-                                        maxWidth: 130
-                                    }}
-                                    type="search"
-                                    placeholder='Search'
-                                    variant="outlined"
-                                    InputProps={{
-                                        endAdornment: (
-                                            <InputAdornment position="end">
-                                                <SearchIcon />
-                                            </InputAdornment>
-                                        )
-                                    }}
-                                    onChange={(event) => {
-                                        props.onFilterChanged(props.columnDef.tableData.id, event.target.value);
-                                    }}
-                                />,
-                                render: (rowData) => (
-                                    <RenderValue value={rowData.MemberLastName} />
-                                ),
-                            },
-                            {
                                 title: "Delegate",
                                 field: "Delegate",
-                                filtering: true,
+                                filtering: resultData.length > 0 ? true : false,
                                 cellStyle: {
                                     // color: "#555151",
                                     fontSize: commonFontSizes.bodyTwo + "rem",
@@ -394,7 +207,7 @@ export const MemberDeleContactsTable = () => {
                                     maxWidth: 160,
                                 },
                                 filterComponent: (props) => <TextField
-                                    style={{ height: "2rem" }}
+                                    style={{ height: "2rem", width: '10rem' }}
                                     type="search"
                                     placeholder='Search'
                                     variant="outlined"
@@ -405,31 +218,49 @@ export const MemberDeleContactsTable = () => {
                                             </InputAdornment>
                                         )
                                     }}
-                                    onChange={(event) => {
-                                        props.onFilterChanged(props.columnDef.tableData.id, event.target.value);
-                                    }}
+                                    onKeyDown={(event) => { handleButtonSearch(event, "Delegate") }}
                                 />,
 
                                 render: (rowData) => (
-                                    <RenderValue value={rowData.Delegate} />
+                                    <RenderValue value={rowData.Delegate ? rowData.Delegate : "-"} />
                                 ),
                             },
                             {
                                 title: "Contact Type",
-                                field: "Contact_Type",
-                                filtering: true,
-                                cellStyle: {
-                                    //  color: "#555151",
-                                    fontSize: commonFontSizes.bodyTwo + "rem",
-                                    fontWeight: 400,
-                                    minWidth: 190,
-                                    maxWidth: 190,
+                                field: "Contact_type",
+                                filtering: resultData.length > 0 ? true : false,
+                                cellStyle: (e, rowData) => {
+                                    if (rowData.Contact_idn) {
+                                        if (rowData.Record_Active == 'Y') {
+                                            return {
+                                                color: "#555151",
+                                                fontSize: commonFontSizes.bodyTwo + "rem",
+                                                fontWeight: 400,
+                                                minWidth: 190,
+                                                maxWidth: 190,
+                                            };
+                                        } else {
+                                            return {
+                                                color: "lightgrey",
+                                                fontSize: commonFontSizes.bodyTwo + "rem",
+                                                fontWeight: 400,
+                                                minWidth: 190,
+                                                maxWidth: 190,
+                                            };
+                                        }
+                                    } else {
+                                        return {
+                                            color: "#A71930",
+                                            fontSize: commonFontSizes.bodyTwo + "rem",
+                                            fontWeight: 400,
+                                            minWidth: 190,
+                                            maxWidth: 190,
+                                        };
+                                    }
                                 },
-
                                 filterComponent: (props) => <TextField
                                     style={{
-                                        height: "2rem", minWidth: 130,
-                                        maxWidth: 130
+                                        height: "2rem", width: '10rem'
                                     }}
                                     type="search"
                                     placeholder='Search'
@@ -441,30 +272,46 @@ export const MemberDeleContactsTable = () => {
                                             </InputAdornment>
                                         )
                                     }}
-                                    onChange={(event) => {
-                                        props.onFilterChanged(props.columnDef.tableData.id, event.target.value);
-                                    }}
+                                    onKeyDown={(event) => { handleButtonSearch(event, "Contact_type") }}
                                 />,
 
                                 render: (rowData) => (
-                                    // <RenderValue value={rowData.Contact_Type} />
-                                    <span style={{ color: rowData.Contact_Type === "Unassigned" ? "#a71930" : "" }}>
-                                        {rowData.Contact_Type}
-                                    </span>
+                                    <RenderValue value={rowData.Contact_type ? rowData.Contact_type : "Unassigned"} />
                                 ),
                             },
                             {
                                 title: "Contact Name",
-                                field: "Contact_Name",
-                                filtering: true,
-                                cellStyle: {
-                                    // color: "#555151",
-                                    fontSize: commonFontSizes.bodyTwo + "rem",
-                                    fontWeight: 400,
-                                    minWidth: 160,
-                                    maxWidth: 160,
+                                field: "Contact_name",
+                                filtering: resultData.length > 0 ? true : false,
+                                cellStyle: (e, rowData) => {
+                                    if (rowData.Contact_idn) {
+                                        if (rowData.Record_Active == 'Y') {
+                                            return {
+                                                color: "#555151",
+                                                fontSize: commonFontSizes.bodyTwo + "rem",
+                                                fontWeight: 400,
+                                                minWidth: 190,
+                                                maxWidth: 190,
+                                            };
+                                        } else {
+                                            return {
+                                                color: "lightgrey",
+                                                fontSize: commonFontSizes.bodyTwo + "rem",
+                                                fontWeight: 400,
+                                                minWidth: 190,
+                                                maxWidth: 190,
+                                            };
+                                        }
+                                    } else {
+                                        return {
+                                            color: "#A71930",
+                                            fontSize: commonFontSizes.bodyTwo + "rem",
+                                            fontWeight: 400,
+                                            minWidth: 160,
+                                            maxWidth: 160,
+                                        };
+                                    }
                                 },
-
                                 filterComponent: (props) => <TextField
                                     style={{
                                         height: "2rem", minWidth: 130,
@@ -480,46 +327,41 @@ export const MemberDeleContactsTable = () => {
                                             </InputAdornment>
                                         )
                                     }}
-                                    onChange={(event) => {
-                                        props.onFilterChanged(props.columnDef.tableData.id, event.target.value);
-                                    }}
+                                    onKeyDown={(event) => { handleButtonSearch(event, "Contact_name") }}
                                 />,
 
                                 render: (rowData) => (
-                                    // <RenderValue value={rowData.Contact_Type} />
-                                    <span style={{ color: rowData.Contact_Name === "Unassigned" ? "#a71930" : "" }}>
-                                        {rowData.Contact_Name}
-                                    </span>
+                                    <RenderValue value={rowData.Contact_name ? rowData.Contact_name : "Unassigned"} />
                                 ),
                             },
                             {
                                 title: "Cell Phone",
-                                field: "Cell_Phone",
+                                field: "Cell_phone",
                                 filtering: false,
                                 cellStyle: {
                                     //  color: "#555151",
                                     fontSize: commonFontSizes.bodyTwo + "rem",
                                     fontWeight: 400,
-                                    minWidth: 140,
-                                    maxWidth: 140,
+                                    // minWidth: 140,
+                                    // maxWidth: 140,
                                 },
                                 render: (rowData) => (
-                                    <RenderValue value={rowData.Cell_Phone} />
+                                    <RenderValue value={rowData.Cell_phone ? rowData.Cell_phone : "-"} />
                                 ),
                             },
                             {
                                 title: "Work Phone",
-                                field: "Work_Phone",
+                                field: "Work_phone",
                                 filtering: false,
                                 cellStyle: {
                                     // color: "#555151",
                                     fontSize: commonFontSizes.bodyTwo + "rem",
                                     fontWeight: 400,
-                                    minWidth: 140,
-                                    maxWidth: 140,
+                                    // minWidth: 140,
+                                    // maxWidth: 140,
                                 },
                                 render: (rowData) => (
-                                    <RenderValue value={rowData.Work_Phone} />
+                                    <RenderValue value={rowData.Work_phone ? rowData.Work_phone : "-"} />
                                 ),
                             },
                             {
@@ -530,11 +372,11 @@ export const MemberDeleContactsTable = () => {
                                     // color: "#555151",
                                     fontSize: commonFontSizes.bodyTwo + "rem",
                                     fontWeight: 400,
-                                    minWidth: 140,
-                                    maxWidth: 140,
+                                    // minWidth: 140,
+                                    // maxWidth: 140,
                                 },
                                 render: (rowData) => (
-                                    <RenderValue value={rowData.Email} />
+                                    <RenderValue value={rowData.Email ? rowData.Email : "-"} />
                                 ),
                             },
                             {
@@ -549,27 +391,12 @@ export const MemberDeleContactsTable = () => {
                                     maxWidth: 140,
                                 },
                                 render: (rowData) => (
-                                    <RenderValue value={rowData.Preferred} />
-                                ),
-                            },
-                            {
-                                title: "Record Active",
-                                field: "Record_Active",
-                                filtering: false,
-                                cellStyle: {
-                                    //    color: "#555151",
-                                    fontSize: commonFontSizes.bodyTwo + "rem",
-                                    fontWeight: 400,
-                                    minWidth: 140,
-                                    maxWidth: 140,
-                                },
-                                render: (rowData) => (
-                                    <RenderValue value={rowData.Record_Active} />
+                                    <RenderValue value={rowData.Preferred ? rowData.Preferred : "-"} />
                                 ),
                             },
                             {
                                 title: "Action",
-                                field: "Action",
+                                field: "Record_Active",
                                 filtering: false,
                                 cellStyle: {
                                     //  color: "#555151",
@@ -579,14 +406,30 @@ export const MemberDeleContactsTable = () => {
                                     maxWidth: 150,
                                 },
                                 render: (rowData) => {
-                                    if (rowData.Contact_Type === 'Unassigned') {
+                                    if (rowData.Contact_idn) {
                                         return (
                                             <div style={{ dispaly: "flex" }}>
                                                 <IconButton
                                                     style={{ padding: "0px 6px 0px 2px" }}
                                                     aria-label="edit"
+                                                    onClick={() => { rowData.Record_Active == 'Y' && handleOpenDialog("REPLACE", rowData.Subscriber_id) }}
                                                 >
-                                                    <Button style={{ textTransform: 'capitalize', fontWeight: "bold", color: "#A71930" }} onClick={() => handleOpenDialog(rowData)}>Assign</Button>
+                                                    <Button style={{ textTransform: 'capitalize', fontWeight: "700", cursor: "default" }} className={rowData.Record_Active == 'Y' ? classes.enableIcon : classes.disableIcon} >Replace</Button>
+                                                </IconButton>
+                                                <span>|</span>
+                                                <IconButton
+                                                    style={{ padding: "0px 6px 0px 8px" }}
+                                                    aria-label="edit"
+                                                    onClick={() => { handleBlockRow(rowData) }}
+                                                >
+                                                    {rowData.Record_Active == 'Y' ?
+                                                        <span class="material-symbols-outlined e7fe" style={{ color: '#861426', cursor: "pointer", fontSize: "1.2rem" }}>
+                                                            person_off
+                                                    </span> :
+                                                        <span class="material-symbols-outlined e7fe" style={{ color: '#861426', cursor: "pointer", fontSize: "1.2rem" }}>
+                                                            person_add
+                                                    </span>
+                                                    }
                                                 </IconButton>
                                             </div>
                                         );
@@ -596,40 +439,96 @@ export const MemberDeleContactsTable = () => {
                                                 <IconButton
                                                     style={{ padding: "0px 6px 0px 2px" }}
                                                     aria-label="edit"
-                                                    // onClick={() =>{ handleOpenDialog(rowData) && rowData.enableEditIcon == false}}
-                                                    onClick={() => {
-                                                        if (rowData.enableEditIcon == false) {
-                                                            handleOpenDialog(rowData)
-                                                        }
-                                                    }}
                                                 >
-                                                    <Button style={{ textTransform: 'capitalize', fontWeight: "700" }} className={rowData.enableEditIcon == false ? classes.enableIcon : classes.disableIcon}  >Replace</Button>
-                                                </IconButton>
-                                                <span>|</span>
-                                                <IconButton
-                                                    style={{ padding: "0px 6px 0px 8px" }}
-                                                    aria-label="edit"
-                                                    onClick={() => {
-                                                        handleBlockRow(rowData)
-                                                    }}
-                                                >
-                                                    {rowData.enableEditIcon == false ?
-                                                        <span class="material-symbols-outlined e7fe" style={{ color: '#861426', width: "1.2rem", height: "1.2rem", cursor: "pointer", fontSize: "1.25rem" }}>
-                                                            person_off
-                                                    </span> :
-                                                        <span class="material-symbols-outlined e7fe" style={{ color: '#861426', width: "1.2rem", height: "1.2rem", cursor: "pointer", fontSize: "1.25rem" }}>
-                                                            person_add
-                                                    </span>
-                                                    }
+                                                    <Button style={{ textTransform: 'capitalize', fontWeight: "bold", color: "#A71930", cursor: "pointer" }}
+                                                        onClick={() => { handleOpenDialog("ASSIGN", rowData.Subscriber_id) }}
+                                                    >Assign</Button>
                                                 </IconButton>
                                             </div>
                                         );
-
                                     }
                                 }
                             },
                         ]}
+
+                        data={query =>
+                            new Promise((resolve, pend) => {
+                                if (searchData == true) {
+                                    var filter_obj = {
+                                        Filtered_field: filterName,
+                                        Filtered_value: filterValue,
+                                        Per_page: query.pageSize,
+                                        Page: (query.page + 1)
+                                    }
+                                } else {
+                                    var filter_obj = {
+                                        Filtered_field: "",
+                                        Filtered_value: "",
+                                        Per_page: query.pageSize,
+                                        Page: (query.page + 1)
+                                    }
+                                }
+
+                                //console.log('filter_obj::', filter_obj)
+                                setLoading(true);
+                                requestWrapper(serviceUrls.get_manage_member_contact, {
+                                    method: "POST",
+                                    headers: {
+                                        "Content-type": "application/json",
+                                    },
+                                    data: filter_obj,
+                                })
+                                    .then((response) => {
+                                        //console.log('response::',response)
+                                        setLoading(false);
+                                        const ErrorCode = response.system.properties.code.example;
+                                        const ErrorMsg = response.system.properties.message.example;
+                                        // console.log('ErrorCode::',ErrorCode,' ',ErrorMsg)
+                                        if (ErrorCode == 500) {
+                                            setPageSize(0);
+                                            setResultData("");
+                                            setNoData("Internal Error");
+                                            resolve({
+                                                data: [],
+                                                page: 0,
+                                                totalCount: 0,
+                                            })
+                                        } else if (ErrorCode == 200) {
+                                            if (ErrorMsg == "No Data Found") {
+                                                setPageSize(0);
+                                                setResultData("");
+                                                setNoData("No Data Found");
+                                                resolve({
+                                                    data: [],
+                                                    page: 0,
+                                                    totalCount: 0,
+                                                })
+                                            } else {
+                                                setPageSize(query.pageSize)
+                                                setResultData(response.details);
+                                                resolve({
+                                                    data: response.details,
+                                                    page: response.Page - 1,
+                                                    totalCount: response.Total,
+                                                })
+                                            }
+                                        }
+                                    })
+                                    .catch((error) => {
+                                        setPageSize(0);
+                                        setLoading(false);
+                                        setNoData("Internal Error");
+                                        resolve({
+                                            data: [],
+                                            page: 0,
+                                            totalCount: 0,
+                                        })
+                                    });
+                            })
+                        }  
                     />
+                    {assignDialogOpen && <AssignDeleTableDialog flag={flag} subId={subId} handleCloseDialog={handleCloseDialog} />}
+                    {searchDialogOpen && <SearchDialog rowData={rowData} handleSearchDialog={handleSearchDialog} handleShowMemberTable={handleShowMemberTable} content={content} flag={actionFlagVal} btnContent="Ok" />}
                 </div>
             </MuiThemeProvider>
         </div>
