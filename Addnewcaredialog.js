@@ -1,5 +1,18 @@
 import React, { useState, useRef, useEffect } from "react";
-import {Button,Grid,Paper,Typography,makeStyles,Dialog,DialogContent,Card,TextField,FormControl,Select,MenuItem} from "@material-ui/core";
+import {
+    Button,
+    Grid,
+    Paper,
+    Typography,
+    makeStyles,
+    Dialog,
+    DialogContent,
+    Card,
+    TextField,
+    FormControl,
+    Select,
+    MenuItem
+} from "@material-ui/core";
 import Draggable from "react-draggable";
 import { COMMONCSS } from "../css/CommonCss";
 import { useStyles } from "../css/MemberDetails";
@@ -15,6 +28,14 @@ import moment from "moment";
 import { deflateSync } from "zlib";
 import SearchDialog from "../common/SearchDialog";
 
+const useStyles1 = makeStyles((theme) => COMMONCSS(theme));
+function PaperComponent(props) {
+    return (
+        <Draggable handle="#hyperlink-dialog">
+            <Paper {...props} />
+        </Draggable>
+    );
+}
 export const AddNewCareDialog = ({ handleCloseDialog, tableDataId, addData, addHeader, editRowData, flag, rowId }) => {
     const classes = useStyles();
     const classes1 = useStyles1();
@@ -93,22 +114,40 @@ export const AddNewCareDialog = ({ handleCloseDialog, tableDataId, addData, addH
         setDelegateCCLevel(event.target.value)
     }
 
+    const isAddButtonEnabled = (memberContactData) => {
+        return (
+            memberContactData.Delegate &&
+            memberContactData.Contact_Type && 
+            memberContactData.Contact_Name.trim() !== "" && 
+            (memberContactData.Cell_Phone.trim() !== "" || memberContactData.Work_Phone.trim() !== "")
+        );
+    };
+
     const handleChange = (event) => {
         if (addHeader === 'Add New Level of Care') {
             setMemberFormData({
                 ...memberFormData,
                 [event.target.name]: event.target.value,
+                // [event.target.name]: event.target.value.replace(/\s/g, ""),
             });
         } else {
             setMemberContactData({
                 ...memberContactData,
                 [event.target.name]: event.target.value,
+                // [event.target.name]: event.target.value.replace(/\s/g, ""),
             });
+
+            // if(event.target.name === "Cell_Phone" || event.target.name === "Work_Phone"){
+            //     checkInput();
+            // }
         }
+      
+
         const updateMemberData = delegateData.map((inputData) => {
             if (inputData.name === event.target.name) {
                 return {
                     ...inputData,
+                    // value: event.target.value.replace(/\s/g, "")
                     value: event.target.value
                 };
             } else {
@@ -120,23 +159,30 @@ export const AddNewCareDialog = ({ handleCloseDialog, tableDataId, addData, addH
         //During input changes, binding values into 'value' attribute
         setDelegateInputData(updateMemberData);
          //To enable and disable buttons
-         checkInput(updateMemberData);
+         checkInput();
     };
 
-    const checkInput = (updateMemberData) => {
-        const memeberIdButtons = updateMemberData.some((checkInput) => {
-            if(checkInput){
-                return checkInput.value && checkInput.value.length > 0;
-            }
-        });
-        if (memeberIdButtons) {
-            setSearchBtnDisable(false);
-            setClearBtnDisable(false);
-        } else {
-            setSearchBtnDisable(true);
-            setClearBtnDisable(true);
-        }
-    };
+    const checkInput = () => {
+        const addButtonEnabled = isAddButtonEnabled(memberContactData);
+
+        setSearchBtnDisable(!addButtonEnabled);
+        setClearBtnDisable(!addButtonEnabled);
+    }
+
+    // const checkInput = (updateMemberData) => {
+    //     const memeberIdButtons = updateMemberData.some((checkInput) => {
+    //         if(checkInput){
+    //             return checkInput.value && checkInput.value.length > 0;
+    //         }
+    //     });
+    //     if (memeberIdButtons) {
+    //         setSearchBtnDisable(false);
+    //         setClearBtnDisable(false);
+    //     } else {
+    //         setSearchBtnDisable(true);
+    //         setClearBtnDisable(true);
+    //     }
+    // };
 
     const handleButtonSearch = () => {
         if (event.target.innerText === "Clear All") {
@@ -146,9 +192,14 @@ export const AddNewCareDialog = ({ handleCloseDialog, tableDataId, addData, addH
             (event.keyCode == 13 && event.key === "Enter")
         ) {
             if (addHeader === 'Add New Level of Care') {
+
+                // getMemberDetails(memberFormData);
                 setSearchDialogOpen(true);
             } else {
-                getMemberDetails(memberContactData);
+               // getMemberDetails(memberContactData);
+              
+                   getMemberDetails(memberContactData);
+               
             }
         }
     }
@@ -156,6 +207,44 @@ export const AddNewCareDialog = ({ handleCloseDialog, tableDataId, addData, addH
     const handleShowMemberTable = () => {
         setSearchDialogOpen(false);
         getMemberDetails(memberFormData);
+    }
+
+    const getMemberDetails = (memberFormData) => {
+        if (addHeader === 'Add New Level of Care') {
+            const filter_obj = {
+                Entity: memberFormData.Entity,
+                CC_Level: memberFormData.CC_Level,
+                CC_Level_Start: memberFormData.CC_Level_Start ? moment(memberFormData.CC_Level_Start).format('DD-MM-YYYY') : "",
+                CC_Level_End: memberFormData.CC_Level_End ? memberFormData.CC_Level_End : "",
+                Reason_For_End: memberFormData.Reason_For_End,
+                Action: "",
+                enableDatePicker: false,
+                id: tableDataId + 1,
+                flag: ""
+            };
+            const { Action, enableDatePicker, id, ...newFilter_obj } = filter_obj; //we can pass newFilter_obj to backend
+            setOpen(false)
+            handleCloseDialog("", flag, rowId) // callback to set dialog to be closed
+        } else {
+            const filter_obj = {
+                Delegate: memberFormData.Delegate,
+                Contact_Type: memberFormData.Contact_Type,
+                Contact_Name: memberFormData.Contact_Name,
+                Cell_Phone: memberFormData.Cell_Phone,
+                Work_Phone: memberFormData.Work_Phone,
+                Email: memberFormData.Email,
+                Preferred: memberFormData.Preferred,
+                Action: "",
+                enableDatePicker: false,
+                id: tableDataId + 1,
+                flag: 'Add',
+                enableEditIcon: false
+            };
+            const { Action, enableDatePicker, id, ...newFilter_obj } = filter_obj; //we can pass newFilter_obj to backend
+            setOpen(false)
+            handleCloseDialog("", flag, rowId) // callback to set dialog to be closed
+        }
+
     }
 
     const handleSearchDialog = (res) => {
@@ -166,6 +255,7 @@ export const AddNewCareDialog = ({ handleCloseDialog, tableDataId, addData, addH
             setSearchDialogOpen(false);
         }
     }
+
 
     const handleClearAll = () => {
         setSearchBtnDisable(true);
@@ -313,15 +403,30 @@ export const AddNewCareDialog = ({ handleCloseDialog, tableDataId, addData, addH
                     <Grid container>
                         <Grid
                             item
+                            // xl={3}
+                            // lg={3}
+                            // md={3}
+                            // sm={6}
                             xs={12}
                             className={classes.buttonFields} style={{ display: "flex", flexDirection: "row", alignItems: "end", justifyContent: "end", paddingTop: "1rem", }}
                         >
+                            <label
+                                style={{
+                                    visibility: "hidden",
+                                    // fontSize:
+                                    //     accessibilityFontSize * commonFontSizes.bodyTwo + "rem",
+                                }}
+                            >
+                                Search Button
+                             </label>
+                            {/* hiding the above label for alignment when accessibility increase the font size dont remove it */}
                             <SearchButton
                                 buttonData={buttonData}
                                 id="Advanced"
                                 searchBtnDisable={searchBtnDisable}
                                 clearBtnDisable={clearBtnDisable}
                                 handleButton={handleButtonSearch}
+                            // accessibilityFontSize={accessibilityFontSize}
                             />
                         </Grid>
                     </Grid>
