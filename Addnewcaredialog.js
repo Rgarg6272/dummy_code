@@ -1,18 +1,5 @@
 import React, { useState, useRef, useEffect } from "react";
-import {
-    Button,
-    Grid,
-    Paper,
-    Typography,
-    makeStyles,
-    Dialog,
-    DialogContent,
-    Card,
-    TextField,
-    FormControl,
-    Select,
-    MenuItem
-} from "@material-ui/core";
+import {Button,Grid,Paper,Typography,makeStyles,Dialog,DialogContent,Card,TextField,FormControl,Select,MenuItem} from "@material-ui/core";
 import Draggable from "react-draggable";
 import { COMMONCSS } from "../css/CommonCss";
 import { useStyles } from "../css/MemberDetails";
@@ -28,14 +15,6 @@ import moment from "moment";
 import { deflateSync } from "zlib";
 import SearchDialog from "../common/SearchDialog";
 
-const useStyles1 = makeStyles((theme) => COMMONCSS(theme));
-function PaperComponent(props) {
-    return (
-        <Draggable handle="#hyperlink-dialog">
-            <Paper {...props} />
-        </Draggable>
-    );
-}
 export const AddNewCareDialog = ({ handleCloseDialog, tableDataId, addData, addHeader, editRowData, flag, rowId }) => {
     const classes = useStyles();
     const classes1 = useStyles1();
@@ -48,6 +27,7 @@ export const AddNewCareDialog = ({ handleCloseDialog, tableDataId, addData, addH
     const [searchDialogOpen, setSearchDialogOpen] = useState(false);
     const [searchBtnDisable, setSearchBtnDisable] = useState(true);
     const [clearBtnDisable, setClearBtnDisable] = useState(true);
+
     //Clearing all the inputs
     const [memberFormData, setMemberFormData] = useState({
         Entity: "",
@@ -74,13 +54,14 @@ export const AddNewCareDialog = ({ handleCloseDialog, tableDataId, addData, addH
 
 
     useEffect(() => {
-        console.log('addData::',addData)
         if (flag === 'edit') {
+            //fetching value from array
             const updateData = delegateData.map((inputData) => {
                 return {
                     ...rowValue, value: inputData.value
                 }
             })
+            //Mapping the value for table row
             setMemberContactData(item => ({
                 ...item,
                 Delegate: updateData[0].value,
@@ -113,12 +94,10 @@ export const AddNewCareDialog = ({ handleCloseDialog, tableDataId, addData, addH
     }
 
     const handleChange = (event) => {
-        //console.log('event::', event, ' ', addHeader)
         if (addHeader === 'Add New Level of Care') {
             setMemberFormData({
                 ...memberFormData,
                 [event.target.name]: event.target.value,
-                // [event.target.name]: event.target.value.replace(/\s/g, ""),
             });
         } else {
             setMemberContactData({
@@ -138,11 +117,28 @@ export const AddNewCareDialog = ({ handleCloseDialog, tableDataId, addData, addH
                 };
             }
         });
-        console.log('updateMemberData:', updateMemberData)
+        //During input changes, binding values into 'value' attribute
         setDelegateInputData(updateMemberData);
+         //To enable and disable buttons
+         checkInput(updateMemberData);
     };
 
-    const handleButtonSearch = (event) => {
+    const checkInput = (updateMemberData) => {
+        const memeberIdButtons = updateMemberData.some((checkInput) => {
+            if(checkInput){
+                return checkInput.value && checkInput.value.length > 0;
+            }
+        });
+        if (memeberIdButtons) {
+            setSearchBtnDisable(false);
+            setClearBtnDisable(false);
+        } else {
+            setSearchBtnDisable(true);
+            setClearBtnDisable(true);
+        }
+    };
+
+    const handleButtonSearch = () => {
         if (event.target.innerText === "Clear All") {
             handleClearAll();
         } else if (
@@ -162,46 +158,6 @@ export const AddNewCareDialog = ({ handleCloseDialog, tableDataId, addData, addH
         getMemberDetails(memberFormData);
     }
 
-    const getMemberDetails = (memberFormData) => {
-        if (addHeader === 'Add New Level of Care') {
-            const filter_obj = {
-                Entity: memberFormData.Entity,
-                CC_Level: memberFormData.CC_Level,
-                CC_Level_Start: memberFormData.CC_Level_Start ? moment(memberFormData.CC_Level_Start).format('DD-MM-YYYY') : "",
-                CC_Level_End: memberFormData.CC_Level_End ? memberFormData.CC_Level_End : "",
-                Reason_For_End: memberFormData.Reason_For_End,
-                Action: "",
-                enableDatePicker: false,
-                id: tableDataId + 1,
-                flag: ""
-            };
-            const { Action, enableDatePicker, id, ...newFilter_obj } = filter_obj; //we can pass newFilter_obj to backend
-            setOpen(false)
-            handleCloseDialog(filter_obj, flag, rowId) // callback to set dialog to be closed
-        } else {
-            // console.log("memberFormData::", memberFormData)
-            const filter_obj = {
-                Delegate: memberFormData.Delegate,
-                Contact_Type: memberFormData.Contact_Type,
-                Contact_Name: memberFormData.Contact_Name,
-                Cell_Phone: memberFormData.Cell_Phone,
-                Work_Phone: memberFormData.Work_Phone,
-                Email: memberFormData.Email,
-                Preferred: memberFormData.Preferred,
-                Action: "",
-                enableDatePicker: false,
-                id: tableDataId + 1,
-                flag: 'Add',
-                enableEditIcon: false
-            };
-            const { Action, enableDatePicker, id, ...newFilter_obj } = filter_obj; //we can pass newFilter_obj to backend
-            console.log("filter_obj::", filter_obj, flag, ' ', rowId)
-            setOpen(false)
-            handleCloseDialog(filter_obj, flag, rowId) // callback to set dialog to be closed
-        }
-
-    }
-
     const handleSearchDialog = (res) => {
         if (res === true) {
             setSearchDialogOpen(false);
@@ -211,8 +167,9 @@ export const AddNewCareDialog = ({ handleCloseDialog, tableDataId, addData, addH
         }
     }
 
-
     const handleClearAll = () => {
+        setSearchBtnDisable(true);
+        setClearBtnDisable(true);
         delegateData.forEach((inputData) => {
             document.getElementById(inputData.id).value = "";
         });
@@ -226,7 +183,6 @@ export const AddNewCareDialog = ({ handleCloseDialog, tableDataId, addData, addH
                 };
             })
         );
-        console.log('delegateData', delegateData,' ',addHeader)
         //setting the values as empty
         if (addHeader === 'Add New Level of Care') {
             setMemberFormData({
@@ -240,7 +196,6 @@ export const AddNewCareDialog = ({ handleCloseDialog, tableDataId, addData, addH
                 enableDatePicker: false
             });
         } else {
-            console.log('before_else::',memberContactData)
             setMemberContactData({
                 ...memberContactData,
                 Delegate: "",
@@ -254,7 +209,6 @@ export const AddNewCareDialog = ({ handleCloseDialog, tableDataId, addData, addH
                 enableDatePicker: false,
                 enableEditIcon: false
             });
-            console.log('after_else::',memberContactData)
         }
     };
 
@@ -362,13 +316,6 @@ export const AddNewCareDialog = ({ handleCloseDialog, tableDataId, addData, addH
                             xs={12}
                             className={classes.buttonFields} style={{ display: "flex", flexDirection: "row", alignItems: "end", justifyContent: "end", paddingTop: "1rem", }}
                         >
-                            <label
-                                style={{
-                                    visibility: "hidden",
-                                }}
-                            >
-                                Search Button
-                             </label>
                             <SearchButton
                                 buttonData={buttonData}
                                 id="Advanced"
