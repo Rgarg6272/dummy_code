@@ -1,22 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useHistory } from "react-router-dom";
-import {
-    Tabs,
-    Tab,
-    Container,
-    Divider,
-    Grid,
-    Typography,
-    Breadcrumbs,
-    Link,
-    Paper,
-    Box,
-    Card,
-    FormControl,
-    Select,
-    MenuItem,
-    TextField,
-} from "@material-ui/core";
+import {Tabs, Tab, Container,Divider,Grid,Typography,Breadcrumbs,Link,Paper,Box,Card,FormControl,Select,MenuItem,TextField,} from "@material-ui/core";
 import { useStyles } from "../../../css/MemberDetails";
 import {
     MuiThemeProvider,
@@ -65,7 +49,6 @@ export const DelegatedNotesSearch = (props) => {
         setMemberFormData({
             ...memberFormData,
             [event.target.name]: event.target.value,
-            // [event.target.name]: event.target.value.replace(/\s/g, ""),
         });
         const updateMemberData = noteTypeData.map((inputData) => {
             if (inputData.name === event.target.name) {
