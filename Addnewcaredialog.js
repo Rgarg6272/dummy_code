@@ -1,5 +1,18 @@
 import React, { useState, useRef, useEffect } from "react";
-import {Button,    Grid,    Paper,    Typography,    makeStyles,    Dialog,    DialogContent,    Card,    TextField,    FormControl,    Select,    MenuItem} from "@material-ui/core";
+import {
+    Button,
+    Grid,
+    Paper,
+    Typography,
+    makeStyles,
+    Dialog,
+    DialogContent,
+    Card,
+    TextField,
+    FormControl,
+    Select,
+    MenuItem
+} from "@material-ui/core";
 import Draggable from "react-draggable";
 import { COMMONCSS } from "../css/CommonCss";
 import { useStyles } from "../css/MemberDetails";
@@ -37,6 +50,7 @@ export const AddNewCareDialog = ({ handleCloseDialog, tableDataId, addData, addH
     const [searchBtnDisable, setSearchBtnDisable] = useState(true);
     const [clearBtnDisable, setClearBtnDisable] = useState(true);
     const [loading, setLoading] = useState(false);
+
 
     //Clearing all the inputs
     const [memberFormData, setMemberFormData] = useState({
@@ -116,21 +130,21 @@ export const AddNewCareDialog = ({ handleCloseDialog, tableDataId, addData, addH
             setMemberFormData({
                 ...memberFormData,
                 [event.target.name]: event.target.value,
-                // [event.target.name]: event.target.value.replace(/\s/g, ""),
             });
         } else {
             setMemberContactData({
                 ...memberContactData,
                 [event.target.name]: event.target.value,
-                // [event.target.name]: event.target.value.replace(/\s/g, ""),
             });
         }
+
         const updateMemberData = delegateData.map((inputData) => {
             if (inputData.name === event.target.name) {
+              //  console.log("input data", event.target.name, event.target.value)
                 return {
                     ...inputData,
-                    // value: event.target.value.replace(/\s/g, "")
-                    value: event.target.value
+                    value: length <=10 ? event.target.value : "Cell_Phone",
+                    hasError:(event.target.name === "Cell_Phone" || event.target.name === "Work_Phone") && event.target.value.replace(/\D/g, '').length < 10,
                 };
             } else {
                 return {
@@ -139,8 +153,8 @@ export const AddNewCareDialog = ({ handleCloseDialog, tableDataId, addData, addH
             }
         });
         setDelegateInputData(updateMemberData);
-        //To enable and disable buttons
         checkInput(updateMemberData);
+
     };
 
     const checkInput = (updateMemberData) => {
@@ -173,9 +187,10 @@ export const AddNewCareDialog = ({ handleCloseDialog, tableDataId, addData, addH
             shouldEnableButton =
                 isDelegateValid &&
                 isContactTypeValid &&
-                isContactNameValid &&
+                isContactNameValid && 
+                !updateMemberData.find(i => i.name === "Cell_Phone") ?.hasError &&
                 isCellPhoneValid;
-        }
+        } 
 
         setSearchBtnDisable(!shouldEnableButton);
         setClearBtnDisable(!shouldEnableButton);
@@ -296,7 +311,7 @@ export const AddNewCareDialog = ({ handleCloseDialog, tableDataId, addData, addH
             setSearchDialogOpen(false);
         }
     }
-
+      //console.log(!!delegateData.find(i => i?.hasError) || searchBtnDisable)
 
     const handleClearAll = () => {
         setSearchBtnDisable(true);
@@ -304,6 +319,8 @@ export const AddNewCareDialog = ({ handleCloseDialog, tableDataId, addData, addH
         delegateData.forEach((inputData) => {
             document.getElementById(inputData.id).value = "";
         });
+
+        //clearing the "value" property
         setDelegateInputData(
             delegateData.map((inputItem) => {
                 return {
@@ -312,6 +329,7 @@ export const AddNewCareDialog = ({ handleCloseDialog, tableDataId, addData, addH
                 };
             })
         );
+        //setting the values as empty
         if (addHeader === 'Add New Level of Care') {
             setMemberFormData({
                 ...memberFormData,
@@ -336,6 +354,8 @@ export const AddNewCareDialog = ({ handleCloseDialog, tableDataId, addData, addH
                 Email: "",
                 Pref_Contact: "",
                 User_name: ""
+                // enableDatePicker: false,
+                // enableEditIcon: false
             });
         }
     };
@@ -402,8 +422,14 @@ export const AddNewCareDialog = ({ handleCloseDialog, tableDataId, addData, addH
                                                                         style: {
                                                                             height: "0.8rem",
                                                                         },
+                                                                       
                                                                     }}
                                                                 />
+                                                                {data?.hasError &&<Grid container style={{  paddingLeft: "0.5rem" }}>
+                                                                    <Grid item xs={12}>
+                                                                        <Typography className={classes.mandaNote}>{data?.errorMessage ?? ""}</Typography>
+                                                                    </Grid>
+                                                                </Grid>}
                                                             </React.Fragment>) :
                                                             <React.Fragment>
                                                                 <FormControl variant="outlined" style={{ width: "100%" }}>
@@ -439,15 +465,32 @@ export const AddNewCareDialog = ({ handleCloseDialog, tableDataId, addData, addH
                     </Grid>
 
                     <Grid container>
-                        <Grid item xs={12} className={classes.buttonFields} style={{ display: "flex", flexDirection: "row", alignItems: "end", justifyContent: "end", paddingTop: "1rem", }}>
+                        <Grid
+                            item
+                            // xl={3}
+                            // lg={3}
+                            // md={3}
+                            // sm={6}
+                            xs={12}
+                            className={classes.buttonFields} style={{ display: "flex", flexDirection: "row", alignItems: "end", justifyContent: "end", paddingTop: "1rem", }}
+                        >
+                            <label
+                                style={{
+                                    visibility: "hidden",
+                                    // fontSize:
+                                    //     accessibilityFontSize * commonFontSizes.bodyTwo + "rem",
+                                }}
+                            >
                                 Search Button
                              </label>
                             <SearchButton
                                 buttonData={buttonData}
+                                key={!!delegateData.find(i => i?.hasError) || searchBtnDisable}
                                 id="Advanced"
-                                searchBtnDisable={searchBtnDisable}
+                                searchBtnDisable={ searchBtnDisable }
                                 clearBtnDisable={clearBtnDisable}
                                 handleButton={handleButtonSearch}
+                            // accessibilityFontSize={accessibilityFontSize}
                             />
                         </Grid>
                     </Grid>
