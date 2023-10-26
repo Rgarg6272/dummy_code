@@ -1,18 +1,5 @@
 import React, { useState, useRef, useEffect } from "react";
-import {
-    Button,
-    Grid,
-    Paper,
-    Typography,
-    makeStyles,
-    Dialog,
-    DialogContent,
-    Card,
-    TextField,
-    FormControl,
-    Select,
-    MenuItem
-} from "@material-ui/core";
+import {Button,    Grid,    Paper,    Typography,    makeStyles,    Dialog,    DialogContent,    Card,    TextField,    FormControl,    Select,    MenuItem} from "@material-ui/core";
 import Draggable from "react-draggable";
 import { COMMONCSS } from "../css/CommonCss";
 import { useStyles } from "../css/MemberDetails";
@@ -27,6 +14,7 @@ import { addButtons, saveButton, staticData } from "../../constants/StaticData";
 import moment from "moment";
 import { deflateSync } from "zlib";
 import SearchDialog from "../common/SearchDialog";
+import { Loader } from "../common/Loader";
 
 const useStyles1 = makeStyles((theme) => COMMONCSS(theme));
 function PaperComponent(props) {
@@ -36,7 +24,7 @@ function PaperComponent(props) {
         </Draggable>
     );
 }
-export const AddNewCareDialog = ({ handleCloseDialog, tableDataId, addData, addHeader, editRowData, flag, rowId }) => {
+export const AddNewCareDialog = ({ handleCloseDialog, tableDataId, addData, addHeader, editRowData, flag, rowId, activateV, contactIdn }) => {
     const classes = useStyles();
     const classes1 = useStyles1();
     const [open, setOpen] = useState(true);
@@ -48,6 +36,7 @@ export const AddNewCareDialog = ({ handleCloseDialog, tableDataId, addData, addH
     const [searchDialogOpen, setSearchDialogOpen] = useState(false);
     const [searchBtnDisable, setSearchBtnDisable] = useState(true);
     const [clearBtnDisable, setClearBtnDisable] = useState(true);
+    const [loading, setLoading] = useState(false);
 
     //Clearing all the inputs
     const [memberFormData, setMemberFormData] = useState({
@@ -61,39 +50,47 @@ export const AddNewCareDialog = ({ handleCloseDialog, tableDataId, addData, addH
     });
 
     const [memberContactData, setMemberContactData] = useState({
+        Action: "",
+        Contact_idn: "",
         Delegate: "",
-        Contact_Type: "",
-        Contact_Name: "",
+        Contact_type: "",
+        Contact_name: "",
         Cell_Phone: "",
         Work_Phone: "",
         Email: "",
-        Preferred: "",
-        Action: "",
-        enableDatePicker: false,
-        enableEditIcon: false
+        Pref_Contact: "",
+        User_name: ""
+        // enableDatePicker: false,
+        // enableEditIcon: false
     });
 
-
     useEffect(() => {
-        if (flag === 'edit') {
+        console.log('delegateData:', delegateData)
+        //To enable and disable buttons
+        checkInput(delegateData);
+        if (flag === 'EDIT') {
+            // setSearchBtnDisable(true);
+            // setClearBtnDisable(true);
             //fetching value from array
             const updateData = delegateData.map((inputData) => {
                 return {
                     ...rowValue, value: inputData.value
                 }
             })
+            // console.log('updateData:', updateData[4].value.replace(/-/g,""));
             //Mapping the value for table row
             setMemberContactData(item => ({
                 ...item,
+                Action: "",
+                Contact_idn: "",
                 Delegate: updateData[0].value,
-                Contact_Type: updateData[1].value,
-                Contact_Name: updateData[2].value,
+                Contact_type: updateData[1].value,
+                Contact_name: updateData[2].value,
                 Cell_Phone: updateData[3].value,
                 Work_Phone: updateData[4].value,
                 Email: updateData[5].value,
-                Preferred: updateData[6].value,
-                Action: "",
-                enableDatePicker: false,
+                Pref_Contact: updateData[6].value,
+                User_name: ""
             }))
             setButtonData(saveButton);
         } else {
@@ -103,7 +100,7 @@ export const AddNewCareDialog = ({ handleCloseDialog, tableDataId, addData, addH
 
     const handleClose = () => {
         setOpen(false)
-        handleCloseDialog("", flag, rowId); // callback to set dialog to be closed
+        handleCloseDialog(); // callback to set dialog to be closed
     };
 
     const handleDelegateLevel = (event) => {
@@ -113,15 +110,6 @@ export const AddNewCareDialog = ({ handleCloseDialog, tableDataId, addData, addH
     const handleDelegateCCLevel = (event) => {
         setDelegateCCLevel(event.target.value)
     }
-
-    const isAddButtonEnabled = (memberContactData) => {
-        return (
-            memberContactData.Delegate &&
-            memberContactData.Contact_Type && 
-            memberContactData.Contact_Name.trim() !== "" && 
-            (memberContactData.Cell_Phone.trim() !== "" || memberContactData.Work_Phone.trim() !== "")
-        );
-    };
 
     const handleChange = (event) => {
         if (addHeader === 'Add New Level of Care') {
@@ -136,13 +124,7 @@ export const AddNewCareDialog = ({ handleCloseDialog, tableDataId, addData, addH
                 [event.target.name]: event.target.value,
                 // [event.target.name]: event.target.value.replace(/\s/g, ""),
             });
-
-            // if(event.target.name === "Cell_Phone" || event.target.name === "Work_Phone"){
-            //     checkInput();
-            // }
         }
-      
-
         const updateMemberData = delegateData.map((inputData) => {
             if (inputData.name === event.target.name) {
                 return {
@@ -156,33 +138,48 @@ export const AddNewCareDialog = ({ handleCloseDialog, tableDataId, addData, addH
                 };
             }
         });
-        //During input changes, binding values into 'value' attribute
         setDelegateInputData(updateMemberData);
-         //To enable and disable buttons
-         checkInput();
+        //To enable and disable buttons
+        checkInput(updateMemberData);
     };
 
-    const checkInput = () => {
-        const addButtonEnabled = isAddButtonEnabled(memberContactData);
+    const checkInput = (updateMemberData) => {
+        console.log(updateMemberData)
+        const isDelegateValid = updateMemberData[0].value ? updateMemberData[0].value.trim() !== "" : "";
+        const isContactTypeValid = updateMemberData[1].value ? updateMemberData[1].value.trim() !== "" : "";
+        const isContactNameValid = updateMemberData[2].value ? updateMemberData[2].value.trim() !== "" : "";
+        const isCellPhoneValid = updateMemberData[3].value ? updateMemberData[3].value.trim() !== "" : "";
+        const isWorkPhoneValid = updateMemberData[4].value ? updateMemberData[4].value.trim() !== "" : "";
+        const preferredContact = updateMemberData[6].value ? updateMemberData[6].value : "";
 
-        setSearchBtnDisable(!addButtonEnabled);
-        setClearBtnDisable(!addButtonEnabled);
-    }
+        let shouldEnableButton = false;
 
-    // const checkInput = (updateMemberData) => {
-    //     const memeberIdButtons = updateMemberData.some((checkInput) => {
-    //         if(checkInput){
-    //             return checkInput.value && checkInput.value.length > 0;
-    //         }
-    //     });
-    //     if (memeberIdButtons) {
-    //         setSearchBtnDisable(false);
-    //         setClearBtnDisable(false);
-    //     } else {
-    //         setSearchBtnDisable(true);
-    //         setClearBtnDisable(true);
-    //     }
-    // };
+        if (!preferredContact) {
+            // Preferred Contact is not selected
+            shouldEnableButton =
+                isDelegateValid &&
+                isContactTypeValid &&
+                isContactNameValid &&
+                (isCellPhoneValid || isWorkPhoneValid);
+        } else if (preferredContact === "Work Phone") {
+            // Preferred Contact is "Work Phone"
+            shouldEnableButton =
+                isDelegateValid &&
+                isContactTypeValid &&
+                isContactNameValid &&
+                isWorkPhoneValid;
+        } else if (preferredContact === "Cell Phone") {
+            // Preferred Contact is "Cell Phone"
+            shouldEnableButton =
+                isDelegateValid &&
+                isContactTypeValid &&
+                isContactNameValid &&
+                isCellPhoneValid;
+        }
+
+        setSearchBtnDisable(!shouldEnableButton);
+        setClearBtnDisable(!shouldEnableButton);
+    };
 
     const handleButtonSearch = () => {
         if (event.target.innerText === "Clear All") {
@@ -192,14 +189,10 @@ export const AddNewCareDialog = ({ handleCloseDialog, tableDataId, addData, addH
             (event.keyCode == 13 && event.key === "Enter")
         ) {
             if (addHeader === 'Add New Level of Care') {
-
-                // getMemberDetails(memberFormData);
                 setSearchDialogOpen(true);
             } else {
-               // getMemberDetails(memberContactData);
-              
-                   getMemberDetails(memberContactData);
-               
+                console.log('else', memberContactData)
+                getMemberDetails(memberContactData);
             }
         }
     }
@@ -226,25 +219,73 @@ export const AddNewCareDialog = ({ handleCloseDialog, tableDataId, addData, addH
             setOpen(false)
             handleCloseDialog("", flag, rowId) // callback to set dialog to be closed
         } else {
+            if (memberFormData.Cell_Phone) {
+                var cleaned = memberFormData.Cell_Phone.replace(/\D/g, "");
+                var match = cleaned.match(/^(1|)?(\d{3})(\d{3})(\d{4})$/);
+                if (match) {
+                    var intlCode = match[1] ? "+1 " : "";
+                    var cellPhone = [intlCode, match[2], "-", match[3], "-", match[4]].join("");
+                } else {
+                    var cellPhone = memberFormData.Cell_Phone;
+                }
+            }
+            if (memberFormData.Work_Phone) {
+                var cleaned = memberFormData.Work_Phone.replace(/\D/g, "");
+                var match = cleaned.match(/^(1|)?(\d{3})(\d{3})(\d{4})$/);
+                if (match) {
+                    var intlCode = match[1] ? "+1 " : "";
+                    var workPhone = [intlCode, match[2], "-", match[3], "-", match[4]].join("");
+                } else {
+                    var workPhone = memberFormData.Work_Phone;
+                }
+            }
             const filter_obj = {
+                Action: flag,
+                Contact_idn: flag == 'ADD' ? memberFormData.Contact_idn : contactIdn,
                 Delegate: memberFormData.Delegate,
-                Contact_Type: memberFormData.Contact_Type,
-                Contact_Name: memberFormData.Contact_Name,
-                Cell_Phone: memberFormData.Cell_Phone,
-                Work_Phone: memberFormData.Work_Phone,
+                Contact_type: memberFormData.Contact_type,
+                Contact_name: memberFormData.Contact_name,
+                Cell_Phone: cellPhone,
+                Work_Phone: workPhone,
                 Email: memberFormData.Email,
-                Preferred: memberFormData.Preferred,
-                Action: "",
-                enableDatePicker: false,
-                id: tableDataId + 1,
-                flag: 'Add',
-                enableEditIcon: false
+                Pref_Contact: memberFormData.Pref_Contact ? memberFormData.Pref_Contact : "",
+                //.replace(/(\r\n|\n|\r)/gm, "").trim() : "",
+                User_name: ""
             };
-            const { Action, enableDatePicker, id, ...newFilter_obj } = filter_obj; //we can pass newFilter_obj to backend
-            setOpen(false)
-            handleCloseDialog("", flag, rowId) // callback to set dialog to be closed
+            console.log('filter_obj', filter_obj)
+            //AddEditDeleContacts(filter_obj)
         }
+    }
 
+    const AddEditDeleContacts = (filter_obj) => {
+        // console.log('filter:',filter_obj)
+        setLoading(true);
+        requestWrapper(serviceUrls.insert_member_contact_action, {
+            method: "POST",
+            headers: {
+                "Content-type": "application/json",
+            },
+            data: filter_obj,
+        })
+            .then((response) => {
+                setLoading(false);
+                const ErrorCode = response.system.properties.code.example;
+                const ErrorMsg = response.system.properties.message.example;
+                if (ErrorCode == 500) {
+                    //setNoData("Internal Error");
+                } else if (ErrorCode == 200) {
+                    if (ErrorMsg == "No Data Found") {
+                        //setNoData("No Data Found");
+                    } else {
+                        setOpen(false)
+                        handleCloseDialog('Y') // callback to set dialog to be closed
+                    }
+                }
+            })
+            .catch((error) => {
+                setLoading(false);
+                //setNoData("Internal Error");
+            });
     }
 
     const handleSearchDialog = (res) => {
@@ -263,8 +304,6 @@ export const AddNewCareDialog = ({ handleCloseDialog, tableDataId, addData, addH
         delegateData.forEach((inputData) => {
             document.getElementById(inputData.id).value = "";
         });
-
-        //clearing the "value" property
         setDelegateInputData(
             delegateData.map((inputItem) => {
                 return {
@@ -273,7 +312,6 @@ export const AddNewCareDialog = ({ handleCloseDialog, tableDataId, addData, addH
                 };
             })
         );
-        //setting the values as empty
         if (addHeader === 'Add New Level of Care') {
             setMemberFormData({
                 ...memberFormData,
@@ -288,16 +326,16 @@ export const AddNewCareDialog = ({ handleCloseDialog, tableDataId, addData, addH
         } else {
             setMemberContactData({
                 ...memberContactData,
+                Action: "",
+                Contact_idn: "",
                 Delegate: "",
-                Contact_Type: "",
-                Contact_Name: "",
+                Contact_type: "",
+                Contact_name: "",
                 Cell_Phone: "",
                 Work_Phone: "",
                 Email: "",
-                Preferred: "",
-                Action: "",
-                enableDatePicker: false,
-                enableEditIcon: false
+                Pref_Contact: "",
+                User_name: ""
             });
         }
     };
@@ -346,7 +384,7 @@ export const AddNewCareDialog = ({ handleCloseDialog, tableDataId, addData, addH
                                                                 {data.label}
                                                             </label>
                                                         </div>
-                                                        {data.inputType === "text" || data.inputType === "date" ? (
+                                                        {data.inputType === "text" || data.inputType === "date" || data.inputType === "number" ? (
                                                             <React.Fragment>
                                                                 <TextField
                                                                     size="small"
@@ -401,35 +439,19 @@ export const AddNewCareDialog = ({ handleCloseDialog, tableDataId, addData, addH
                     </Grid>
 
                     <Grid container>
-                        <Grid
-                            item
-                            // xl={3}
-                            // lg={3}
-                            // md={3}
-                            // sm={6}
-                            xs={12}
-                            className={classes.buttonFields} style={{ display: "flex", flexDirection: "row", alignItems: "end", justifyContent: "end", paddingTop: "1rem", }}
-                        >
-                            <label
-                                style={{
-                                    visibility: "hidden",
-                                    // fontSize:
-                                    //     accessibilityFontSize * commonFontSizes.bodyTwo + "rem",
-                                }}
-                            >
+                        <Grid item xs={12} className={classes.buttonFields} style={{ display: "flex", flexDirection: "row", alignItems: "end", justifyContent: "end", paddingTop: "1rem", }}>
                                 Search Button
                              </label>
-                            {/* hiding the above label for alignment when accessibility increase the font size dont remove it */}
                             <SearchButton
                                 buttonData={buttonData}
                                 id="Advanced"
                                 searchBtnDisable={searchBtnDisable}
                                 clearBtnDisable={clearBtnDisable}
                                 handleButton={handleButtonSearch}
-                            // accessibilityFontSize={accessibilityFontSize}
                             />
                         </Grid>
                     </Grid>
+                    {loading && <Loader />}
                     {searchDialogOpen && <SearchDialog handleSearchDialog={handleSearchDialog} handleShowMemberTable={handleShowMemberTable} content={staticData.addNewLevelDateErr} btnContent="ok" />}
                 </DialogContent>
             </Dialog>
