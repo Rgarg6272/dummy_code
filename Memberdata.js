@@ -31,20 +31,28 @@ export const AdDelegateContactData = [
   {
     id: 4,
     placeHolder: "Enter Cell Phone",
-    inputType: "text",
+    inputType: "number",
     label: "Cell Phone",
     name: "Cell_Phone",
     Action: "",
-    enableDatePicker: false
+    enableDatePicker: false,
+    maxLength: 10,
+    pattern: "\\d*",
+    errorMessage: "Should be a maximum of 10 Digit.",
+    hasError: false,
   },
   {
     id: 5,
     placeHolder: "Enter Work Phone",
-    inputType: "text",
+    inputType: "number",
     label: "Work Phone",
     name: "Work_Phone",
     Action: "",
-    enableDatePicker: false
+    enableDatePicker: false,
+    maxLength: 10,
+    pattern: "\\d*",
+    errorMessage: "Should be a maximum of 10 Digit.",
+    hasError: false,
   },
   {
     id: 6,
@@ -53,7 +61,8 @@ export const AdDelegateContactData = [
     label: "Email",
     name: "Email",
     Action: "",
-    enableDatePicker: false
+    enableDatePicker: false,
+    
   },
   {
     id: 7,
