@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from "react";
-import {Button,Grid,Typography,makeStyles,Dialog,DialogContent,Card, TextField, FormControl, Select, MenuItem} from "@material-ui/core";
+import {Button,Grid,Paper,Typography,makeStyles,Dialog,DialogContent,Card,TextField,FormControl,Select,MenuItem} from "@material-ui/core";
 import Draggable from "react-draggable";
 import { COMMONCSS } from "../css/CommonCss";
 import { useStyles } from "../css/MemberDetails";
@@ -17,15 +17,6 @@ import SearchDialog from "../common/SearchDialog";
 import { Loader } from "../common/Loader";
 import e from "cors";
 
-
-const useStyles1 = makeStyles((theme) => COMMONCSS(theme));
-function PaperComponent(props) {
-    return (
-        <Draggable handle="#hyperlink-dialog">
-            <Paper {...props} />
-        </Draggable>
-    );
-}
 export const AddNewCareDialog = ({ handleCloseDialog, tableDataId, addData, addHeader, editRowData, flag, rowId, activateV, contactIdn }) => {
     const classes = useStyles();
     const classes1 = useStyles1();
@@ -45,6 +36,11 @@ export const AddNewCareDialog = ({ handleCloseDialog, tableDataId, addData, addH
     const [helperTextteleerror, setHelperTextteleerror] = useState("");
     const [workPhoneError, setWorkPhoneError] = useState(false);
     const [helperTextError, setHelperTextError] = useState("");
+    const [emailerror, setEmailError] = useState(false);
+    const [helperTextEmailError, setHelperTextEmailError] = useState("");
+    const [emailVal, setEmailVal] = useState("");
+    const [validEmail, setValidEmail] = useState(false);
+
     //Clearing all the inputs
     const [memberFormData, setMemberFormData] = useState({
         Entity: "",
@@ -72,7 +68,6 @@ export const AddNewCareDialog = ({ handleCloseDialog, tableDataId, addData, addH
     });
 
     useEffect(() => {
-        //console.log('delegateData:', delegateData[3].name, ' ', delegateData[4].name);
         if (delegateData[3].name == 'Cell_Phone' && delegateData[3].value) {
             var res1 = formatPhoneNumber(delegateData[3].value)
             setTelephone(res1)
@@ -88,9 +83,6 @@ export const AddNewCareDialog = ({ handleCloseDialog, tableDataId, addData, addH
         //To enable and disable buttons
         checkInput(delegateData);
         if (flag === 'EDIT') {
-            // setSearchBtnDisable(true);
-            // setClearBtnDisable(true);
-            //fetching value from array
             const updateData = delegateData.map((inputData) => {
                 return {
                     ...rowValue, value: inputData.value
@@ -153,6 +145,25 @@ export const AddNewCareDialog = ({ handleCloseDialog, tableDataId, addData, addH
         }
     }
 
+    const formatEmailAddress = (input) => {
+        if (input) {
+            const emailValue = event.target.value;
+            // Regular expression for email validation
+            const emailRegex = /^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,4}$/;
+            // Check if the entered email matches the regular expression
+            const isValidEmail = emailRegex.test(emailValue);
+            //console.log('isValidEmail:', isValidEmail);
+            setValidEmail(isValidEmail);
+            if (isValidEmail) {
+                setEmailError(false);
+                setHelperTextteleerror("");
+            } else {
+                setEmailError(true);
+            }
+            return input;
+        }
+    }
+
     const handleTeleError = (val, desc) => {
         if (val == 'cellPhone') {
             setteleerror(true);
@@ -163,19 +174,29 @@ export const AddNewCareDialog = ({ handleCloseDialog, tableDataId, addData, addH
         }
     };
 
+    const handleEmailError = (val, desc) => {
+        if (validEmail) {
+            setEmailError(false);
+            setHelperTextEmailError("");
+        } else {
+            setEmailError(true);
+            setHelperTextEmailError(desc);
+        }
+
+    }
+
     const handleChange = (event) => {
         if (addHeader === 'Add New Level of Care') {
             setMemberFormData({
                 ...memberFormData,
                 [event.target.name]: event.target.value,
-                // [event.target.name]: event.target.value.replace(/\s/g, ""),
             });
         } else {
             //console.log("event", event.target.name);
             if (event.target.name == "Cell_Phone") {
-                if(event.target.value){
+                if (event.target.value) {
                     var res = formatPhoneNumber(event.target.value);
-                }else{
+                } else {
                     var res = "";
                 }
                 setTelephone(res);
@@ -193,18 +214,15 @@ export const AddNewCareDialog = ({ handleCloseDialog, tableDataId, addData, addH
                         handleTeleError('cellPhone', 'Cell Phone must be 10 characters');
                     }
                 }
-
-                //var res = formatPhoneNumber(event.target.value);
-                //console.log("res:",res);
                 setMemberContactData({
                     ...memberContactData,
                     [event.target.name]: res,
                     // [event.target.name]: telephone,
                 });
             } else if (event.target.name == "Work_Phone") {
-                if(event.target.value){
+                if (event.target.value) {
                     var res = formatPhoneNumber(event.target.value);
-                }else{
+                } else {
                     var res = "";
                 }
                 setWorkphone(res);
@@ -226,10 +244,23 @@ export const AddNewCareDialog = ({ handleCloseDialog, tableDataId, addData, addH
                 setMemberContactData({
                     ...memberContactData,
                     [event.target.name]: res,
-                    // [event.target.name]: telephone,
                 });
+            } else if (event.target.name == "Email") {
+                if (event.target.value) {
+                    var res = formatEmailAddress(event.target.value);
+                } else {
+                    var res = "";
+                }
+                setEmailVal(res);
+                if (event.target.value.length == 0 && res == "") {
+                    setEmailError(false);
+                    setHelperTextEmailError("");
+                } else {
+                    setEmailError(true);
+                    handleEmailError("email", "Enter valid email address");
+                }
             } else {
-               // console.log('else:', telephone)
+                // console.log('else:', telephone)
                 if (event.target.value == 'Cell Phone') {
                     if (telephone.length <= 0) {
                         setteleerror(true);
@@ -239,8 +270,6 @@ export const AddNewCareDialog = ({ handleCloseDialog, tableDataId, addData, addH
                     } else {
                         setWorkPhoneError(false);
                         setHelperTextError("");
-                        //setteleerror(false);
-                       // setHelperTextteleerror("");
                     }
                 } else if (event.target.value == 'Work Phone') {
                     if (workphone.length <= 0) {
@@ -251,14 +280,11 @@ export const AddNewCareDialog = ({ handleCloseDialog, tableDataId, addData, addH
                     } else {
                         setWorkPhoneError(false);
                         setHelperTextError("");
-                        //setteleerror(false);
-                        //setHelperTextteleerror("");
                     }
                 }
                 setMemberContactData({
                     ...memberContactData,
                     [event.target.name]: event.target.value,
-                    // [event.target.name]: event.target.value.replace(/\s/g, ""),
                 });
             }
         }
@@ -266,7 +292,6 @@ export const AddNewCareDialog = ({ handleCloseDialog, tableDataId, addData, addH
             if (inputData.name === event.target.name) {
                 return {
                     ...inputData,
-                    // value: event.target.value.replace(/\s/g, "")
                     value: event.target.value
                 };
             } else {
@@ -275,9 +300,7 @@ export const AddNewCareDialog = ({ handleCloseDialog, tableDataId, addData, addH
                 };
             }
         });
-        //During input changes, binding values into 'value' attribute
         setDelegateInputData(updateMemberData);
-        //To enable and disable buttons
         checkInput(updateMemberData);
     };
 
@@ -298,14 +321,12 @@ export const AddNewCareDialog = ({ handleCloseDialog, tableDataId, addData, addH
                 isContactNameValid &&
                 (isCellPhoneValid || isWorkPhoneValid);
         } else if (preferredContact === "Work Phone") {
-            // Preferred Contact is "Work Phone"
             shouldEnableButton =
                 isDelegateValid &&
                 isContactTypeValid &&
                 isContactNameValid &&
                 isWorkPhoneValid;
         } else if (preferredContact === "Cell Phone") {
-            // Preferred Contact is "Cell Phone"
             shouldEnableButton =
                 isDelegateValid &&
                 isContactTypeValid &&
@@ -399,6 +420,7 @@ export const AddNewCareDialog = ({ handleCloseDialog, tableDataId, addData, addH
             })
             .catch((error) => {
                 setLoading(false);
+                //setNoData("Internal Error");
             });
     }
 
@@ -415,6 +437,9 @@ export const AddNewCareDialog = ({ handleCloseDialog, tableDataId, addData, addH
     const handleClearAll = () => {
         setSearchBtnDisable(true);
         setClearBtnDisable(true);
+        setTelephone('');
+        setWorkphone('');
+        setEmailVal('');
         delegateData.forEach((inputData) => {
             document.getElementById(inputData.id).value = "";
         });
@@ -453,6 +478,8 @@ export const AddNewCareDialog = ({ handleCloseDialog, tableDataId, addData, addH
                 Email: "",
                 Pref_Contact: "",
                 User_name: ""
+                // enableDatePicker: false,
+                // enableEditIcon: false
             });
         }
     };
@@ -487,7 +514,15 @@ export const AddNewCareDialog = ({ handleCloseDialog, tableDataId, addData, addH
                                         {delegateData && delegateData.length > 0
                                             && delegateData.map((data) => {
                                                 return (
-                                                    <Grid item xl={6} lg={6} md={6} sm={6} xs={12} key={data.id} >
+                                                    <Grid
+                                                        item
+                                                        xl={6}
+                                                        lg={6}
+                                                        md={6}
+                                                        sm={6}
+                                                        xs={12}
+                                                        key={data.id}
+                                                    >
                                                         <div className={classes.helpIcon}>
                                                             <label>
                                                                 {data.label}
@@ -523,8 +558,10 @@ export const AddNewCareDialog = ({ handleCloseDialog, tableDataId, addData, addH
                                                                         placeholder={data.placeHolder}
                                                                         type={data.inputType}
                                                                         variant="outlined"
-                                                                        //value={data.value}
-                                                                        value={data.value}
+                                                                        // value={data.value}
+                                                                        value={data.name == 'Email' ? emailVal : data.value}
+                                                                        error={data.name == 'Email' && emailerror}
+                                                                        helperText={data.name == 'Email' && helperTextEmailError}
                                                                         className={data.className}
                                                                         onKeyDown={handleButtonSearch}
                                                                         name={data.name}
@@ -598,7 +635,6 @@ export const AddNewCareDialog = ({ handleCloseDialog, tableDataId, addData, addH
                                 searchBtnDisable={searchBtnDisable}
                                 clearBtnDisable={clearBtnDisable}
                                 handleButton={handleButtonSearch}
-                            // accessibilityFontSize={accessibilityFontSize}
                             />
                         </Grid>
                     </Grid>
