@@ -1,18 +1,5 @@
 import React, { useState, useRef, useEffect } from "react";
-import {
-    Button,
-    Grid,
-    Paper,
-    Typography,
-    makeStyles,
-    Dialog,
-    DialogContent,
-    Card,
-    TextField,
-    FormControl,
-    Select,
-    MenuItem
-} from "@material-ui/core";
+import {Button,Grid,Typography,makeStyles,Dialog,DialogContent,Card, TextField, FormControl, Select, MenuItem} from "@material-ui/core";
 import Draggable from "react-draggable";
 import { COMMONCSS } from "../css/CommonCss";
 import { useStyles } from "../css/MemberDetails";
@@ -28,6 +15,8 @@ import moment from "moment";
 import { deflateSync } from "zlib";
 import SearchDialog from "../common/SearchDialog";
 import { Loader } from "../common/Loader";
+import e from "cors";
+
 
 const useStyles1 = makeStyles((theme) => COMMONCSS(theme));
 function PaperComponent(props) {
@@ -50,8 +39,12 @@ export const AddNewCareDialog = ({ handleCloseDialog, tableDataId, addData, addH
     const [searchBtnDisable, setSearchBtnDisable] = useState(true);
     const [clearBtnDisable, setClearBtnDisable] = useState(true);
     const [loading, setLoading] = useState(false);
-
-
+    const [telephone, setTelephone] = useState("");
+    const [workphone, setWorkphone] = useState("");
+    const [teleerror, setteleerror] = useState(false);
+    const [helperTextteleerror, setHelperTextteleerror] = useState("");
+    const [workPhoneError, setWorkPhoneError] = useState(false);
+    const [helperTextError, setHelperTextError] = useState("");
     //Clearing all the inputs
     const [memberFormData, setMemberFormData] = useState({
         Entity: "",
@@ -79,7 +72,19 @@ export const AddNewCareDialog = ({ handleCloseDialog, tableDataId, addData, addH
     });
 
     useEffect(() => {
-        console.log('delegateData:', delegateData)
+        //console.log('delegateData:', delegateData[3].name, ' ', delegateData[4].name);
+        if (delegateData[3].name == 'Cell_Phone' && delegateData[3].value) {
+            var res1 = formatPhoneNumber(delegateData[3].value)
+            setTelephone(res1)
+        } else {
+            setTelephone("")
+        }
+        if (delegateData[4].name == 'Work_Phone' && delegateData[4].value) {
+            var res2 = formatPhoneNumber(delegateData[4].value)
+            setWorkphone(res2)
+        } else {
+            setWorkphone("");
+        }
         //To enable and disable buttons
         checkInput(delegateData);
         if (flag === 'EDIT') {
@@ -125,26 +130,144 @@ export const AddNewCareDialog = ({ handleCloseDialog, tableDataId, addData, addH
         setDelegateCCLevel(event.target.value)
     }
 
+    const formatPhoneNumber = (input) => {
+        if (input) {
+            input = input.replace(/\D/g, "");
+            input = input.substring(0, 10);
+            var size = input.length;
+            if (size == 0) {
+                input = input;
+            } else if (size < 4) {
+                input = input;
+            } else if (size < 7) {
+                input = input.substring(0, 3) + "-" + input.substring(3, 6);
+            } else {
+                input =
+                    input.substring(0, 3) +
+                    "-" +
+                    input.substring(3, 6) +
+                    "-" +
+                    input.substring(6, 10);
+            }
+            return input;
+        }
+    }
+
+    const handleTeleError = (val, desc) => {
+        if (val == 'cellPhone') {
+            setteleerror(true);
+            setHelperTextteleerror(desc);
+        } else {
+            setWorkPhoneError(true);
+            setHelperTextError(desc);
+        }
+    };
+
     const handleChange = (event) => {
         if (addHeader === 'Add New Level of Care') {
             setMemberFormData({
                 ...memberFormData,
                 [event.target.name]: event.target.value,
+                // [event.target.name]: event.target.value.replace(/\s/g, ""),
             });
         } else {
-            setMemberContactData({
-                ...memberContactData,
-                [event.target.name]: event.target.value,
-            });
-        }
+            //console.log("event", event.target.name);
+            if (event.target.name == "Cell_Phone") {
+                if(event.target.value){
+                    var res = formatPhoneNumber(event.target.value);
+                }else{
+                    var res = "";
+                }
+                setTelephone(res);
+                if (event.target.value.length > 11) {
+                    setteleerror(false);
+                    setHelperTextteleerror("");
+                } else {
+                    if (event.target.value.length == 0 && res == "") {
+                        setteleerror(false);
+                        setHelperTextteleerror("")
+                    } else {
+                        setteleerror(true);
+                        setWorkPhoneError(false);
+                        setHelperTextError("");
+                        handleTeleError('cellPhone', 'Cell Phone must be 10 characters');
+                    }
+                }
 
+                //var res = formatPhoneNumber(event.target.value);
+                //console.log("res:",res);
+                setMemberContactData({
+                    ...memberContactData,
+                    [event.target.name]: res,
+                    // [event.target.name]: telephone,
+                });
+            } else if (event.target.name == "Work_Phone") {
+                if(event.target.value){
+                    var res = formatPhoneNumber(event.target.value);
+                }else{
+                    var res = "";
+                }
+                setWorkphone(res);
+                if (event.target.value.length > 11) {
+                    setWorkPhoneError(false);
+                    setHelperTextError("");
+                } else {
+                    if (event.target.value.length == 0 && res == "") {
+                        setWorkPhoneError(false);
+                        setHelperTextError("");
+                    } else {
+                        setWorkPhoneError(true);
+                        setteleerror(false);
+                        setHelperTextteleerror("");
+                        handleTeleError("workPhone", "Work Phone must be 10 characters");
+                    }
+                }
+
+                setMemberContactData({
+                    ...memberContactData,
+                    [event.target.name]: res,
+                    // [event.target.name]: telephone,
+                });
+            } else {
+               // console.log('else:', telephone)
+                if (event.target.value == 'Cell Phone') {
+                    if (telephone.length <= 0) {
+                        setteleerror(true);
+                        setWorkPhoneError(false);
+                        setHelperTextError("");
+                        handleTeleError("cellPhone", "Please enter the preferred contact");
+                    } else {
+                        setWorkPhoneError(false);
+                        setHelperTextError("");
+                        //setteleerror(false);
+                       // setHelperTextteleerror("");
+                    }
+                } else if (event.target.value == 'Work Phone') {
+                    if (workphone.length <= 0) {
+                        setWorkPhoneError(true);
+                        setteleerror(false);
+                        setHelperTextteleerror("");
+                        handleTeleError("workPhone", "Please enter the preferred contact");
+                    } else {
+                        setWorkPhoneError(false);
+                        setHelperTextError("");
+                        //setteleerror(false);
+                        //setHelperTextteleerror("");
+                    }
+                }
+                setMemberContactData({
+                    ...memberContactData,
+                    [event.target.name]: event.target.value,
+                    // [event.target.name]: event.target.value.replace(/\s/g, ""),
+                });
+            }
+        }
         const updateMemberData = delegateData.map((inputData) => {
             if (inputData.name === event.target.name) {
-              //  console.log("input data", event.target.name, event.target.value)
                 return {
                     ...inputData,
-                    value: length <=10 ? event.target.value : "Cell_Phone",
-                    hasError:(event.target.name === "Cell_Phone" || event.target.name === "Work_Phone") && event.target.value.replace(/\D/g, '').length < 10,
+                    // value: event.target.value.replace(/\s/g, "")
+                    value: event.target.value
                 };
             } else {
                 return {
@@ -152,24 +275,23 @@ export const AddNewCareDialog = ({ handleCloseDialog, tableDataId, addData, addH
                 };
             }
         });
+        //During input changes, binding values into 'value' attribute
         setDelegateInputData(updateMemberData);
+        //To enable and disable buttons
         checkInput(updateMemberData);
-
     };
 
     const checkInput = (updateMemberData) => {
-        console.log(updateMemberData)
         const isDelegateValid = updateMemberData[0].value ? updateMemberData[0].value.trim() !== "" : "";
         const isContactTypeValid = updateMemberData[1].value ? updateMemberData[1].value.trim() !== "" : "";
         const isContactNameValid = updateMemberData[2].value ? updateMemberData[2].value.trim() !== "" : "";
-        const isCellPhoneValid = updateMemberData[3].value ? updateMemberData[3].value.trim() !== "" : "";
-        const isWorkPhoneValid = updateMemberData[4].value ? updateMemberData[4].value.trim() !== "" : "";
+        const isCellPhoneValid = updateMemberData[3].value ? (updateMemberData[3].value.length > 11) : "";
+        const isWorkPhoneValid = updateMemberData[4].value ? (updateMemberData[4].value.length > 11) : "";
         const preferredContact = updateMemberData[6].value ? updateMemberData[6].value : "";
 
         let shouldEnableButton = false;
 
         if (!preferredContact) {
-            // Preferred Contact is not selected
             shouldEnableButton =
                 isDelegateValid &&
                 isContactTypeValid &&
@@ -187,10 +309,9 @@ export const AddNewCareDialog = ({ handleCloseDialog, tableDataId, addData, addH
             shouldEnableButton =
                 isDelegateValid &&
                 isContactTypeValid &&
-                isContactNameValid && 
-                !updateMemberData.find(i => i.name === "Cell_Phone") ?.hasError &&
+                isContactNameValid &&
                 isCellPhoneValid;
-        } 
+        }
 
         setSearchBtnDisable(!shouldEnableButton);
         setClearBtnDisable(!shouldEnableButton);
@@ -206,7 +327,7 @@ export const AddNewCareDialog = ({ handleCloseDialog, tableDataId, addData, addH
             if (addHeader === 'Add New Level of Care') {
                 setSearchDialogOpen(true);
             } else {
-                console.log('else', memberContactData)
+                // console.log('else', memberContactData)
                 getMemberDetails(memberContactData);
             }
         }
@@ -234,41 +355,20 @@ export const AddNewCareDialog = ({ handleCloseDialog, tableDataId, addData, addH
             setOpen(false)
             handleCloseDialog("", flag, rowId) // callback to set dialog to be closed
         } else {
-            if (memberFormData.Cell_Phone) {
-                var cleaned = memberFormData.Cell_Phone.replace(/\D/g, "");
-                var match = cleaned.match(/^(1|)?(\d{3})(\d{3})(\d{4})$/);
-                if (match) {
-                    var intlCode = match[1] ? "+1 " : "";
-                    var cellPhone = [intlCode, match[2], "-", match[3], "-", match[4]].join("");
-                } else {
-                    var cellPhone = memberFormData.Cell_Phone;
-                }
-            }
-            if (memberFormData.Work_Phone) {
-                var cleaned = memberFormData.Work_Phone.replace(/\D/g, "");
-                var match = cleaned.match(/^(1|)?(\d{3})(\d{3})(\d{4})$/);
-                if (match) {
-                    var intlCode = match[1] ? "+1 " : "";
-                    var workPhone = [intlCode, match[2], "-", match[3], "-", match[4]].join("");
-                } else {
-                    var workPhone = memberFormData.Work_Phone;
-                }
-            }
             const filter_obj = {
                 Action: flag,
                 Contact_idn: flag == 'ADD' ? memberFormData.Contact_idn : contactIdn,
                 Delegate: memberFormData.Delegate,
                 Contact_type: memberFormData.Contact_type,
                 Contact_name: memberFormData.Contact_name,
-                Cell_Phone: cellPhone,
-                Work_Phone: workPhone,
+                Cell_Phone: telephone ? telephone : "",
+                Work_Phone: workphone ? workphone : "",
                 Email: memberFormData.Email,
                 Pref_Contact: memberFormData.Pref_Contact ? memberFormData.Pref_Contact : "",
-                //.replace(/(\r\n|\n|\r)/gm, "").trim() : "",
                 User_name: ""
             };
-            console.log('filter_obj', filter_obj)
-            //AddEditDeleContacts(filter_obj)
+            //console.log('filter_obj', filter_obj)
+            AddEditDeleContacts(filter_obj)
         }
     }
 
@@ -299,7 +399,6 @@ export const AddNewCareDialog = ({ handleCloseDialog, tableDataId, addData, addH
             })
             .catch((error) => {
                 setLoading(false);
-                //setNoData("Internal Error");
             });
     }
 
@@ -311,7 +410,7 @@ export const AddNewCareDialog = ({ handleCloseDialog, tableDataId, addData, addH
             setSearchDialogOpen(false);
         }
     }
-      //console.log(!!delegateData.find(i => i?.hasError) || searchBtnDisable)
+
 
     const handleClearAll = () => {
         setSearchBtnDisable(true);
@@ -354,8 +453,6 @@ export const AddNewCareDialog = ({ handleCloseDialog, tableDataId, addData, addH
                 Email: "",
                 Pref_Contact: "",
                 User_name: ""
-                // enableDatePicker: false,
-                // enableEditIcon: false
             });
         }
     };
@@ -390,46 +487,55 @@ export const AddNewCareDialog = ({ handleCloseDialog, tableDataId, addData, addH
                                         {delegateData && delegateData.length > 0
                                             && delegateData.map((data) => {
                                                 return (
-                                                    <Grid
-                                                        item
-                                                        xl={6}
-                                                        lg={6}
-                                                        md={6}
-                                                        sm={6}
-                                                        xs={12}
-                                                        key={data.id}
-                                                    >
+                                                    <Grid item xl={6} lg={6} md={6} sm={6} xs={12} key={data.id} >
                                                         <div className={classes.helpIcon}>
                                                             <label>
                                                                 {data.label}
                                                             </label>
                                                         </div>
-                                                        {data.inputType === "text" || data.inputType === "date" || data.inputType === "number" ? (
+                                                        {data.inputType === "text" || data.inputType === "date" || data.inputType === "search" ? (
                                                             <React.Fragment>
-                                                                <TextField
-                                                                    size="small"
-                                                                    id={data.id}
-                                                                    placeholder={data.placeHolder}
-                                                                    type={data.inputType}
-                                                                    variant="outlined"
-                                                                    value={data.value}
-                                                                    className={data.className}
-                                                                    onKeyDown={handleButtonSearch}
-                                                                    name={data.name}
-                                                                    style={{ width: "100%" }}
-                                                                    onChange={handleChange}
-                                                                    inputProps={{
-                                                                        style: {
-                                                                            height: "0.8rem",
-                                                                        },
-                                                                       
-                                                                    }}
-                                                                />
-                                                                {data?.hasError &&<Grid container style={{  paddingLeft: "0.5rem" }}>
-                                                                    <Grid item xs={12}>
-                                                                        <Typography className={classes.mandaNote}>{data?.errorMessage ?? ""}</Typography>
-                                                                    </Grid>
-                                                                </Grid>}
+                                                                {data.inputType == 'search' ?
+                                                                    <TextField
+                                                                        size="small"
+                                                                        id={data.id}
+                                                                        placeholder={data.placeHolder}
+                                                                        type={data.inputType}
+                                                                        variant="outlined"
+                                                                        //value={data.value}
+                                                                        value={data.name == 'Cell_Phone' ? telephone : workphone}
+                                                                        error={data.name == 'Cell_Phone' ? teleerror : workPhoneError}
+                                                                        helperText={data.name == 'Cell_Phone' ? helperTextteleerror : helperTextError}
+                                                                        className={data.className}
+                                                                        onKeyDown={handleButtonSearch}
+                                                                        name={data.name}
+                                                                        style={{ width: "100%" }}
+                                                                        onChange={handleChange}
+                                                                        inputProps={{
+                                                                            style: {
+                                                                                height: "0.8rem",
+                                                                            },
+                                                                        }}
+                                                                    /> :
+                                                                    <TextField
+                                                                        size="small"
+                                                                        id={data.id}
+                                                                        placeholder={data.placeHolder}
+                                                                        type={data.inputType}
+                                                                        variant="outlined"
+                                                                        //value={data.value}
+                                                                        value={data.value}
+                                                                        className={data.className}
+                                                                        onKeyDown={handleButtonSearch}
+                                                                        name={data.name}
+                                                                        style={{ width: "100%" }}
+                                                                        onChange={handleChange}
+                                                                        inputProps={{
+                                                                            style: {
+                                                                                height: "0.8rem",
+                                                                            },
+                                                                        }}
+                                                                    />}
                                                             </React.Fragment>) :
                                                             <React.Fragment>
                                                                 <FormControl variant="outlined" style={{ width: "100%" }}>
@@ -442,10 +548,25 @@ export const AddNewCareDialog = ({ handleCloseDialog, tableDataId, addData, addH
                                                                         // onChange={handleDelegateCCLevel}
                                                                         onKeyDown={handleButtonSearch}
                                                                         onChange={handleChange}
+                                                                        MenuProps={{
+                                                                            anchorOrigin: {
+                                                                                vertical: "bottom",
+                                                                                horizontal: "left"
+                                                                            },
+                                                                            transformOrigin: {
+                                                                                vertical: "top",
+                                                                                horizontal: "left"
+                                                                            },
+                                                                            getContentAnchorEl: null
+                                                                        }}
                                                                     >
-                                                                        {data.DelegateLevelOptions.map((data) => (
-                                                                            <MenuItem value={data}>{data}</MenuItem>
-                                                                        ))}
+                                                                        {data.name == 'Delegate' ? data.DelegateLevelOptions.map((data) => (
+                                                                            <MenuItem style={{ height: "1.8rem" }} value={data.key}>{data.desc}</MenuItem>
+                                                                        ))
+                                                                            :
+                                                                            data.DelegateLevelOptions.map((data) => (
+                                                                                <MenuItem value={data}>{data}</MenuItem>
+                                                                            ))}
                                                                     </Select>
                                                                 </FormControl>
                                                             </React.Fragment>
@@ -456,6 +577,7 @@ export const AddNewCareDialog = ({ handleCloseDialog, tableDataId, addData, addH
                                         <Grid container style={{ marginTop: "-0.3rem", paddingLeft: "0.5rem" }}>
                                             <Grid item xs={12}>
                                                 <Typography className={classes.mandaNote}>*Either Cell Phone or Work Phone is Mandatory</Typography>
+                                                <Typography className={classes.mandaNote}>*Required Fields</Typography>
                                             </Grid>
                                         </Grid>
                                     </Grid>
@@ -467,27 +589,13 @@ export const AddNewCareDialog = ({ handleCloseDialog, tableDataId, addData, addH
                     <Grid container>
                         <Grid
                             item
-                            // xl={3}
-                            // lg={3}
-                            // md={3}
-                            // sm={6}
                             xs={12}
                             className={classes.buttonFields} style={{ display: "flex", flexDirection: "row", alignItems: "end", justifyContent: "end", paddingTop: "1rem", }}
                         >
-                            <label
-                                style={{
-                                    visibility: "hidden",
-                                    // fontSize:
-                                    //     accessibilityFontSize * commonFontSizes.bodyTwo + "rem",
-                                }}
-                            >
-                                Search Button
-                             </label>
                             <SearchButton
                                 buttonData={buttonData}
-                                key={!!delegateData.find(i => i?.hasError) || searchBtnDisable}
                                 id="Advanced"
-                                searchBtnDisable={ searchBtnDisable }
+                                searchBtnDisable={searchBtnDisable}
                                 clearBtnDisable={clearBtnDisable}
                                 handleButton={handleButtonSearch}
                             // accessibilityFontSize={accessibilityFontSize}
