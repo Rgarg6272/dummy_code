@@ -68,36 +68,6 @@ export const HomePage = (props) => {
 
   return (
     <React.Fragment>
-      <div style={{padding: "0 9.4% 0 9.4%"  }}>
-        <Grid container style={{ cursor: "pointer" }}>
-          {AlertMessage && AlertMessage.length > 0
-            ? AlertMessage.map((data) => {
-              return (
-                <Grid item xs={12} style={{ padding: "0.8rem", margin: "0px 0px -15px 0px" }}>
-                  <Grid container>
-                    <Grid item xl={12} lg={12} md={12} sm={12} xs={12} >
-                      <Alert
-                        severity="info"
-                        icon={<InfoIcon style={{ color: '#2C2B2C' }} />}
-                        style={{ background: "#C4C4C4", color: '#2C2B2C' }}
-                        action={
-                          <IconButton
-                            aria-label="close"
-                            color="inherit"
-                            size="small"
-                          >
-                            <CloseIcon fontSize="inherit" style={{ color: '#2C2B2C' }} />
-                          </IconButton>
-                        }
-                      >
-                        {data.label}
-                      </Alert>
-                    </Grid>
-                  </Grid>
-                </Grid>)
-            }) : ""}
-        </Grid>
-      </div>
       <div style={{ padding: "2rem 10% 3% 10%",marginTop:"-1rem" }}>
         <Paper elevation={0} variant="outlined" className={classes.paper} style={{ padding: "1rem" }}>
           <Grid container style={{ padding: '0.8rem', cursor: "pointer" }}>
